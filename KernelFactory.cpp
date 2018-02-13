@@ -223,7 +223,6 @@ void KernelFactory::runKernels(Vector& f) {
                                 (index_t) nodes.size(), np * np, maxLevel);
         Vector ret;
         realParts[i].run(ret);
-        std::cout << ret(100) << std::endl;
     }
 }
 
