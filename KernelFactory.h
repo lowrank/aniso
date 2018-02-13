@@ -39,15 +39,6 @@ public:
     void makeKernels();
     void runKernels(Vector& f);
 
-
-
-    // pre-define all the functions
-    scalar_t K0(point& a, point& b) {
-        scalar_t dist = sqrt(SQR(a.x - b.x) + SQR(a.y - b.y));
-        return dist == 0. ? 0. : exp(-lineIntegral(a, b))/dist;
-    }
-
-
     vector<Vector> sigma_t_coeff;
     vector<Vector> sigma_s_coeff;
 

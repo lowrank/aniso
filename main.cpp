@@ -4,7 +4,7 @@ int main() {
 #ifdef RUN_OMP
     omp_set_num_threads(omp_get_max_threads());
 #endif
-    Aniso aniso(64, 4, 1, 0.8, 64);
+    Aniso aniso(128, 1, 1, 0.8, 64);
 
     // load function.
     setValue(aniso.sigma_t, 40.2);

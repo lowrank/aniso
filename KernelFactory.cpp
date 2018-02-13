@@ -37,7 +37,6 @@ KernelFactory::~KernelFactory() {
 
 }
 
-
 /// lineIntegral
 /// \param x0
 /// \param y0
@@ -205,16 +204,26 @@ scalar_t KernelFactory::integral_helper(point &p, point &q) {
 
 void KernelFactory::makeKernels() {
     for (int i = 0; i < kernelSize; ++i) {
-        realParts[i].eval = std::bind(&KernelFactory::K0, this,_1,_2);
+        // capture this and the kernel index
+        realParts[i].eval = [this,i](point& a, point& b) {
+            scalar_t dist = sqrt(SQR(a.x - b.x) + SQR(a.y - b.y));
+            scalar_t ang  = atan2(a.y - b.y, a.x - b.x);
+            return dist == 0. ? 0. : exp(-lineIntegral(a, b))*cos(i * ang)/dist;
+        };
     }
+
 }
 
 void KernelFactory::runKernels(Vector& f) {
+    // not finished yet.
+    //todo: f is values, assign weights.
     for (int i = 0; i < kernelSize; ++i) {
-        realParts[i].initialize(np, nodes, nodes, f, nodes.size(), nodes.size(), np*np, maxLevel);
+        realParts[i].initialize(np, nodes, nodes, f,
+                                (index_t) nodes.size(),
+                                (index_t) nodes.size(), np * np, maxLevel);
         Vector ret;
         realParts[i].run(ret);
-        std::cout << ret.row() << std::endl;
+        std::cout << ret(100) << std::endl;
     }
 }
 
