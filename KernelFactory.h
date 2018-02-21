@@ -22,6 +22,8 @@ public:
     vector<kernel> realParts;
     int kernelSize;
 
+    Vector anisotropy;
+
     Quadrature lineQuadratureRule;
     Quadrature singQuadratureRule;
 
@@ -38,6 +40,10 @@ public:
     void interpolation();
     void makeKernels();
     void runKernels(Vector& f);
+
+    void nearRemoval(Vector& f);
+    void refineAddOn(Vector& f);
+    void singularAdd(Vector& f);
 
     vector<Vector> sigma_t_coeff;
     vector<Vector> sigma_s_coeff;

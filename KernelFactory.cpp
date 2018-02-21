@@ -8,10 +8,15 @@ KernelFactory::KernelFactory(int geometry_size, int geometry_degree, int kernel_
                              double kernel_g, int kernel_degree):Geometry(geometry_size, geometry_degree) {
     assert(size >= 1);
     realParts.resize((unsigned long) (2 * kernel_size - 1));
+    anisotropy.resize(kernel_size);
     kernelSize = 2 * kernel_size - 1;
 
-    get_legendre_data((size_t) kernel_degree, singQuadratureRule);
-    get_legendre_data((size_t) geometry_degree, lineQuadratureRule);
+    get_legendre_data((size_t) kernel_degree, singQuadratureRule); // Duffy
+    get_legendre_data((size_t) geometry_degree, lineQuadratureRule); // Usual case
+
+    for (int i = 0; i < kernel_size; ++i) {
+        anisotropy(i) = (pow(kernel_g, i) - pow(kernel_g, kernel_size))/(1 - pow(kernel_g, kernel_size));
+    }
 
 
     // set sigma_s, sigma_t.
@@ -211,7 +216,6 @@ void KernelFactory::makeKernels() {
             return dist == 0. ? 0. : exp(-lineIntegral(a, b))*cos(i * ang)/dist;
         };
     }
-
 }
 
 void KernelFactory::runKernels(Vector& f) {
@@ -226,10 +230,26 @@ void KernelFactory::runKernels(Vector& f) {
     }
 }
 
+
+
+
+
 int  KernelFactory::getRow(double y)  {
     return int(floor(y * sz));
 }
 
 int  KernelFactory::getCol(double x)  {
     return int(floor(x * sz));
+}
+
+void KernelFactory::nearRemoval(Vector &f) {
+
+}
+
+void KernelFactory::refineAddOn(Vector &f) {
+
+}
+
+void KernelFactory::singularAdd(Vector &f) {
+
 }
