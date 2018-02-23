@@ -40,6 +40,8 @@ public:
     void interpolation();
     void makeKernels();
     void runKernels(Vector& f);
+    void runKernelsCache(Vector& f);
+    void runKernelsFast(Vector& f);
 
     void nearRemoval(Vector& f);
     void refineAddOn(Vector& f);

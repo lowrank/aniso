@@ -24,6 +24,7 @@
 
 #include "utils.h"
 #include "blas_wrapper.h"
+#include "linalg.h"
 
 namespace bbfmm {
     class basePoint {
@@ -184,7 +185,7 @@ namespace bbfmm {
 
             getCenterRadius(_source);
             this->root = 0;
-
+            this->dict.clear();
             this->dict.push_back(node(0, 0));
             this->maxId = root;
 
@@ -462,6 +463,9 @@ namespace bbfmm {
         Vector chebyNode;
         Matrix tNode;
 
+        vector<vector<Matrix>> Cache;
+
+
         kernel() {
             nChebyshev = 0;
             rank = 0;
@@ -491,6 +495,13 @@ namespace bbfmm {
 
             getTransfer(nChebyshev, chebyNode, tNode, R);
 
+            Cache.resize(t.dict.size());
+
+            for (int i = 0; i < t.dict.size(); ++i) {
+                Cache[i].resize(
+                        (unsigned long) (t.dict[i].nUList + t.dict[i].nVList + t.dict[i].nWList + t.dict[i].nXList));
+            }
+
         }
 
         void run(Vector &potentialMatrix) {
@@ -515,6 +526,65 @@ namespace bbfmm {
 #pragma  omp single
 #endif
                 RUN("down-pass", downPass(0, potentialMatrix));
+            }
+#ifdef RUN_OMP
+#pragma omp taskwait
+#endif
+        }
+
+        void runCache(Vector &potentialMatrix) {
+            reset(0);
+#ifdef RUN_OMP
+#pragma omp parallel
+#endif
+            {
+#ifdef RUN_OMP
+#pragma omp single
+#endif
+                RUN("up-pass", upPass(0));
+            }
+#ifdef RUN_OMP
+#pragma omp taskwait
+#endif
+            potentialMatrix = Vector(t.nTarget);
+#ifdef RUN_OMP
+#pragma omp parallel
+#endif
+            {
+#ifdef RUN_OMP
+#pragma  omp single
+#endif
+                RUN("down-pass", downPassCache(0, potentialMatrix));
+            }
+#ifdef RUN_OMP
+#pragma omp taskwait
+#endif
+        }
+
+
+        void runFast(Vector &potentialMatrix) {
+            reset(0);
+#ifdef RUN_OMP
+#pragma omp parallel
+#endif
+            {
+#ifdef RUN_OMP
+#pragma omp single
+#endif
+                RUN("up-pass", upPass(0));
+            }
+#ifdef RUN_OMP
+#pragma omp taskwait
+#endif
+            potentialMatrix = Vector(t.nTarget);
+#ifdef RUN_OMP
+#pragma omp parallel
+#endif
+            {
+#ifdef RUN_OMP
+#pragma  omp single
+#endif
+                RUN("down-pass", downPassFast(0, potentialMatrix));
             }
 #ifdef RUN_OMP
 #pragma omp taskwait
@@ -875,6 +945,189 @@ namespace bbfmm {
 #endif
             }
         }
+#ifdef BBFMM_CACHE
+        void downPassCache(index_t rootId, Vector &potential) {
+            node &n = t.dict[rootId];
+            Matrix K;
+
+            int cnt = 0;
+
+            if (n.parent != -1) {
+                /*
+                 * V list
+                 */
+                for (index_t i : n.vList) {
+                    if (!t.dict[i].isEmpty) {
+                        kernelEvalChebyshev(nChebyshev, t.dict[i].scaledCnode, nChebyshev, n.scaledCnode, K);
+                        dgemv(1.0, K, t.dict[i].nodeCharge, 1.0, n.nodePotential);
+                        Cache[rootId][cnt] = K; cnt = cnt+1;
+                    }
+                }
+                /*
+                 * X List
+                 */
+                for (index_t i : n.xList) {
+                    if (!t.dict[i].isEmpty) {
+                        kernelEvalChebyshev(nChebyshev, t.dict[i].scaledCnode, nChebyshev, n.scaledCnode, K);
+                        dgemv(1.0, K, t.dict[i].nodeCharge, 1.0, n.nodePotential);
+                        Cache[rootId][cnt] = K; cnt = cnt+1;
+                    }
+                }
+
+                /*
+                 * L2L
+                 */
+                node &p = t.dict[n.parent];
+                dgemv(1.0, this->R[n.nodeIndex], p.nodePotential, 1.0, n.nodePotential);
+
+            }
+
+            if (n.isLeaf && n.nTarget != 0) {
+                n.potential.resize(n.nTarget);
+
+                /*
+                 * U List
+                 */
+                for (index_t i : n.uList) {
+                    if (!t.dict[i].isEmpty) {
+                        getCharge(i);
+                        kernelEvalIndex(t.dict[i].sourceIndex, n.targetIndex, K);
+                        dgemv(1.0, K, t.dict[i].charge, 1.0, n.potential);
+                        Cache[rootId][cnt] = K; cnt = cnt+1;
+                    }
+                }
+
+                /*
+                 * W List
+                 */
+
+                for (index_t i : n.wList) {
+                    if (!t.dict[i].isEmpty) {
+                        getCharge(i);
+                        kernelEvalIndex(t.dict[i].sourceIndex, n.targetIndex, K);
+                        dgemv(1.0, K, t.dict[i].charge, 1.0, n.potential);
+                        Cache[rootId][cnt] = K; cnt = cnt+1;
+                    }
+                }
+
+                /*
+                 * L2T
+                 */
+                dgemv(1.0, n.L, n.nodePotential, 1.0, n.potential);
+
+                /*
+                 * Finalize, caution:
+                 *
+                 * omp should be fine here, because no two threads will write to the same place at the same time.
+                 */
+                for (index_t i = 0; i < n.nTarget; i++) {
+                    potential(n.targetIndex[i]) += n.potential(i);
+                }
+            }
+
+            if (!n.isLeaf) {
+                for (index_t i = 0; i < 4; ++i) {
+#ifdef RUN_OMP
+#pragma omp task shared(n, potential) firstprivate(i)
+#endif
+                    downPassCache(n.child[i], potential);
+                }
+#ifdef RUN_OMP
+#pragma omp taskwait
+#endif
+            }
+        }
+
+        void downPassFast(index_t rootId, Vector &potential) {
+            node &n = t.dict[rootId];
+            Matrix K;
+
+            int cnt = 0;
+
+            if (n.parent != -1) {
+                /*
+                 * V list
+                 */
+                for (index_t i : n.vList) {
+                    if (!t.dict[i].isEmpty) {
+                        K = Cache[rootId][cnt]; cnt = cnt+1;
+                        dgemv(1.0, K, t.dict[i].nodeCharge, 1.0, n.nodePotential);
+                    }
+                }
+                /*
+                 * X List
+                 */
+                for (index_t i : n.xList) {
+                    if (!t.dict[i].isEmpty) {
+                        K = Cache[rootId][cnt]; cnt = cnt+1;
+                        dgemv(1.0, K, t.dict[i].nodeCharge, 1.0, n.nodePotential);
+                    }
+                }
+
+                /*
+                 * L2L
+                 */
+                node &p = t.dict[n.parent];
+                dgemv(1.0, this->R[n.nodeIndex], p.nodePotential, 1.0, n.nodePotential);
+
+            }
+
+            if (n.isLeaf && n.nTarget != 0) {
+                n.potential.resize(n.nTarget);
+
+                /*
+                 * U List
+                 */
+                for (index_t i : n.uList) {
+                    if (!t.dict[i].isEmpty) {
+                        getCharge(i);
+                        K = Cache[rootId][cnt]; cnt = cnt+1;
+                        dgemv(1.0, K, t.dict[i].charge, 1.0, n.potential);
+                    }
+                }
+
+                /*
+                 * W List
+                 */
+
+                for (index_t i : n.wList) {
+                    if (!t.dict[i].isEmpty) {
+                        getCharge(i);
+                        K = Cache[rootId][cnt]; cnt = cnt+1;
+                        dgemv(1.0, K, t.dict[i].charge, 1.0, n.potential);
+                    }
+                }
+
+                /*
+                 * L2T
+                 */
+                dgemv(1.0, n.L, n.nodePotential, 1.0, n.potential);
+
+                /*
+                 * Finalize, caution:
+                 *
+                 * omp should be fine here, because no two threads will write to the same place at the same time.
+                 */
+                for (index_t i = 0; i < n.nTarget; i++) {
+                    potential(n.targetIndex[i]) += n.potential(i);
+                }
+            }
+
+
+
+            if (!n.isLeaf) {
+                for (index_t i = 0; i < 4; ++i) {
+#ifdef RUN_OMP
+#pragma omp task shared(n, potential) firstprivate(i)
+#endif
+                    downPassFast(n.child[i], potential);
+                }
+#ifdef RUN_OMP
+#pragma omp taskwait
+#endif
+            }
+        }
+#endif
     };
 }
 

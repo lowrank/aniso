@@ -220,6 +220,7 @@ void KernelFactory::makeKernels() {
 
 void KernelFactory::runKernels(Vector& f) {
     // not finished yet.
+
     //todo: f is values, assign weights.
     for (int i = 0; i < kernelSize; ++i) {
         realParts[i].initialize(np, nodes, nodes, f,
@@ -227,9 +228,41 @@ void KernelFactory::runKernels(Vector& f) {
                                 (index_t) nodes.size(), np * np, maxLevel);
         Vector ret;
         realParts[i].run(ret);
+        std::cout << ret(0) <<std::endl;
     }
 }
 
+
+void KernelFactory::runKernelsCache(Vector& f) {
+    // not finished yet.
+    //todo: f is values, assign weights.
+
+    for (int i = 0; i < kernelSize; ++i) {
+        realParts[i].initialize(np, nodes, nodes, f,
+                                (index_t) nodes.size(),
+                                (index_t) nodes.size(), np * np, maxLevel);
+        Vector ret;
+        realParts[i].runCache(ret);
+
+        std::cout << ret(0) <<std::endl;
+    }
+}
+
+
+void KernelFactory::runKernelsFast(Vector& f) {
+    // not finished yet.
+    //todo: f is values, assign weights.
+
+    for (int i = 0; i < kernelSize; ++i) {
+        realParts[i].initialize(np, nodes, nodes, f,
+                                (index_t) nodes.size(),
+                                (index_t) nodes.size(), np * np, maxLevel);
+
+        Vector ret;
+        realParts[i].runFast(ret);
+        std::cout << ret(0) <<std::endl;
+    }
+}
 
 
 

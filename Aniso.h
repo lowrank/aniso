@@ -16,7 +16,6 @@ public:
     ~Aniso();
 
 
-    Profiler timer;
 
 
 
