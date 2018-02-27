@@ -12,7 +12,7 @@
 class Aniso : public KernelFactory {
 public:
     Aniso(int geometry_size, int geometry_degree,
-          int kernel_size, double kernel_g, int kernel_degree);
+          int kernel_size, double kernel_g, int kernel_degree, int np, int maxLevel);
     ~Aniso();
 
 

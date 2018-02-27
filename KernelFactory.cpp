@@ -30,11 +30,6 @@ KernelFactory::KernelFactory(int geometry_size, int geometry_degree, int kernel_
         sigma_s_coeff[i].resize(SQR(deg));
         sigma_t_coeff[i].resize(SQR(deg));
     }
-
-    np = 4;
-    maxLevel = 10;
-    maxPoint = 16;
-
 }
 
 

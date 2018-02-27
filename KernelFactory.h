@@ -31,7 +31,6 @@ public:
     Vector sigma_s;
 
     index_t np;
-    index_t maxPoint;
     index_t maxLevel;
 
     scalar_t lineIntegral(point& p, point &q);

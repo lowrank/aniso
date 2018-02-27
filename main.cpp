@@ -1,12 +1,23 @@
 #include <iostream>
 #include "Aniso.h"
-int main() {
+#include "utility/config.h"
+
+int main(int argc, char* argv[]) {
 #ifdef RUN_OMP
     omp_set_num_threads(omp_get_max_threads());
 #endif
-    Aniso aniso(64, 2, 2, 0.8, 64);
 
-    std::cout << aniso.anisotropy << std::endl;
+    config cfg(argv[1]); cfg.print();
+
+    auto domain_size     = atoi(cfg.options["domainSize"].c_str());
+    auto quadrature_rule = atoi(cfg.options["quadRule"].c_str());
+    auto kernel_size     = atoi(cfg.options["kernelSize"].c_str());
+    auto anisotropy      = atof(cfg.options["g"].c_str());
+    auto singular_rule   = atoi(cfg.options["singRule"].c_str());
+    auto fmm_np          = atoi(cfg.options["np"].c_str());
+    auto fmm_maxLevel    = atoi(cfg.options["maxLevel"].c_str());
+
+    Aniso aniso(domain_size, quadrature_rule,  kernel_size, anisotropy, singular_rule, fmm_np, fmm_maxLevel);
 
     // load function.
     setValue(aniso.sigma_t, 40.2);
@@ -17,7 +28,6 @@ int main() {
     Vector f(aniso.numberOfNodes);
     setValue(f, 1.);
     aniso.makeKernels();
-
 
     Profiler timer;
 
