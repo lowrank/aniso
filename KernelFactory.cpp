@@ -208,30 +208,27 @@ void KernelFactory::makeKernels() {
         realParts[i].eval = [this,i](point& a, point& b) {
             scalar_t dist = sqrt(SQR(a.x - b.x) + SQR(a.y - b.y));
             scalar_t ang  = atan2(a.y - b.y, a.x - b.x);
-            return dist == 0. ? 0. : exp(-lineIntegral(a, b))*cos(i * ang)/dist;
+            // compute the traditional interaction by fmm.
+            return dist == 0. ? 0. :  exp(-lineIntegral(a, b))*cos(i * ang)/dist;
         };
     }
 }
 
 void KernelFactory::runKernels(Vector& f) {
     // not finished yet.
-
-    //todo: f is values, assign weights.
     for (int i = 0; i < kernelSize; ++i) {
         realParts[i].initialize(np, nodes, nodes, f,
                                 (index_t) nodes.size(),
                                 (index_t) nodes.size(), np * np, maxLevel);
         Vector ret;
         realParts[i].run(ret);
-        std::cout << ret(0) <<std::endl;
+        std::cout << ret(0) << " " << ret(nodes.size()/2)<<std::endl;
     }
 }
 
 
 void KernelFactory::runKernelsCache(Vector& f) {
     // not finished yet.
-    //todo: f is values, assign weights.
-
     for (int i = 0; i < kernelSize; ++i) {
         realParts[i].initialize(np, nodes, nodes, f,
                                 (index_t) nodes.size(),
@@ -239,15 +236,13 @@ void KernelFactory::runKernelsCache(Vector& f) {
         Vector ret;
         realParts[i].runCache(ret);
 
-        std::cout << ret(0) <<std::endl;
+        std::cout << ret(0) << " " << ret(nodes.size()/2)<<std::endl;
     }
 }
 
 
 void KernelFactory::runKernelsFast(Vector& f) {
     // not finished yet.
-    //todo: f is values, assign weights.
-
     for (int i = 0; i < kernelSize; ++i) {
         realParts[i].initialize(np, nodes, nodes, f,
                                 (index_t) nodes.size(),
@@ -255,12 +250,9 @@ void KernelFactory::runKernelsFast(Vector& f) {
 
         Vector ret;
         realParts[i].runFast(ret);
-        std::cout << ret(0) <<std::endl;
+        std::cout << ret(0) << " " << ret(nodes.size()/2) <<std::endl;
     }
 }
-
-
-
 
 int  KernelFactory::getRow(double y)  {
     return int(floor(y * sz));
@@ -271,7 +263,38 @@ int  KernelFactory::getCol(double x)  {
 }
 
 void KernelFactory::nearRemoval(Vector &f) {
+    for (int i = 0; i < kernelSize; ++i) {
+        Vector ret((int) nodes.size());
+        setValue(ret, 0.);
+        for (int targetSquareId = 0; targetSquareId < numberOfSquares; ++targetSquareId) {
+            for (int targetQuadratureId = 0; targetQuadratureId < SQR(deg); ++targetQuadratureId) {
 
+                int targetId = (int) (targetSquareId * (SQR(deg)) + targetQuadratureId);
+                int targetSquareRow = targetSquareId / sz;
+                int targetSquareCol = targetSquareId - sz * targetSquareRow;
+
+                for (int nearSourceSquareRowId = -1; nearSourceSquareRowId < 2; ++nearSourceSquareRowId) {
+                    for (int nearSourceSquareColId = -1; nearSourceSquareColId < 2; ++nearSourceSquareColId) {
+                        int nearSourceSquareId = targetSquareId + nearSourceSquareRowId * sz + nearSourceSquareColId;
+                        if (nearSourceSquareRowId + targetSquareRow >= 0 && nearSourceSquareRowId + targetSquareRow < sz) {
+                            if (nearSourceSquareColId + targetSquareCol >= 0 && nearSourceSquareColId + targetSquareCol < sz) {
+                                for (int nearSourceQuadratureId = 0;
+                                     nearSourceQuadratureId < SQR(deg); ++nearSourceQuadratureId) {
+                                    int nearSourceId = (int) (nearSourceSquareId * (SQR(deg)) + nearSourceQuadratureId);
+                                    ret(targetId) +=
+                                            realParts[i].eval(nodes[nearSourceId], nodes[targetId]) * f(nearSourceId);
+
+                                }
+                            }
+                        }
+                    }
+                }
+
+            }
+        }
+        std::cout << ret(0) << " " << ret(nodes.size()/2)<<std::endl;
+
+    }
 }
 
 void KernelFactory::refineAddOn(Vector &f) {

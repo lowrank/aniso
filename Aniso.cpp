@@ -16,5 +16,18 @@ Aniso::~Aniso() {
 
 }
 
+void Aniso::CacheSize() {
+    for (int i = 0; i < kernelSize; ++i) {
+        auto len = realParts[i].Cache.size();
+        int cache = 0;
+        for (int j = 0; j < len; ++j) {
+            for (int k = 0 ; k < realParts[i].Cache[j].size(); ++k) {
+                cache += realParts[i].Cache[j][k].row() * realParts[i].Cache[j][k].col() * sizeof(scalar_t);
+            }
+        }
+        std::cout << cache / 1024 / 1024 << " MByte" <<std::endl;
+    }
+}
+
 
 

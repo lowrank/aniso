@@ -27,9 +27,15 @@ int main(int argc, char* argv[]) {
 
     Vector f(aniso.numberOfNodes);
     setValue(f, 1.);
+    for (int i = 0; i < aniso.nodes.size(); ++i) {
+        f(i) = f(i) * aniso.weights[i];
+    }
+
     aniso.makeKernels();
 
     Profiler timer;
+
+    std::cout << aniso.nodes[0].x << " " << aniso.nodes[0].y << std::endl;
 
     timer.tic("Normal");
     aniso.runKernels(f);
@@ -45,6 +51,10 @@ int main(int argc, char* argv[]) {
     timer.toc();
 #endif
 
+    timer.tic("Removal");
+    aniso.nearRemoval(f);
+    timer.toc();
 
+    aniso.CacheSize();
 
 }

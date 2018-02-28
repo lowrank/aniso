@@ -16,6 +16,7 @@ public:
     ~Aniso();
 
 
+    void CacheSize();
 
 
 
