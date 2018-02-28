@@ -16,7 +16,7 @@ Aniso::~Aniso() {
 
 }
 
-void Aniso::CacheSize() {
+void Aniso::displayKernelCacheSize() {
     for (int i = 0; i < kernelSize; ++i) {
         auto len = realParts[i].Cache.size();
         int cache = 0;
@@ -25,7 +25,13 @@ void Aniso::CacheSize() {
                 cache += realParts[i].Cache[j][k].row() * realParts[i].Cache[j][k].col() * sizeof(scalar_t);
             }
         }
-        std::cout << cache / 1024 / 1024 << " MByte" <<std::endl;
+        auto res =  double(cache) / 1024.0 / 1024.0;
+        if (res < 1024) {
+            std::cout << res << " MByte" <<std::endl;
+        }
+        else {
+            std::cout << res  / 1024.0 << " GByte" << std::endl;
+        }
     }
 }
 

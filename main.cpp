@@ -55,6 +55,6 @@ int main(int argc, char* argv[]) {
     aniso.nearRemoval(f);
     timer.toc();
 
-    aniso.CacheSize();
+    aniso.displayKernelCacheSize();
 
 }

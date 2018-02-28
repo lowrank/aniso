@@ -16,7 +16,7 @@ public:
     ~Aniso();
 
 
-    void CacheSize();
+    void displayKernelCacheSize();
 
 
 
