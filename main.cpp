@@ -35,11 +35,9 @@ int main(int argc, char* argv[]) {
 
     Profiler timer;
 
-    std::cout << aniso.nodes[0].x << " " << aniso.nodes[0].y << std::endl;
-
-    timer.tic("Normal");
-    aniso.runKernels(f);
-    timer.toc();
+//    timer.tic("Normal");
+//    aniso.runKernels(f);
+//    timer.toc();
 
 #ifdef BBFMM_CACHE
     timer.tic("Cache");
@@ -53,6 +51,14 @@ int main(int argc, char* argv[]) {
 
     timer.tic("Removal");
     aniso.nearRemoval(f);
+    timer.toc();
+
+    timer.tic("NearAddOn Cache");
+    aniso.refineAddOnCache(f);
+    timer.toc();
+
+    timer.tic("NearAddOn Fast");
+    aniso.refineAddOnFast(f);
     timer.toc();
 
     aniso.displayKernelCacheSize();

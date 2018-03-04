@@ -34,7 +34,7 @@ Geometry::Geometry(int size, int degree) {
         }
     }
 
-    int nRefineLevel = 2;              // default value, can be adaptive, but very expansive.
+    int nRefineLevel =  DEFAULT_REFINE_LEVEL;              // default value, can be adaptive, but very expansive.
     legendreNorms.resize(SQR(degree));
 
     /*
@@ -60,8 +60,8 @@ Geometry::Geometry(int size, int degree) {
         }
     }
 
-    int coarseQuadratureSize = (int)SQR(degree);
-    int refineQuadratureSize = coarseQuadratureSize;
+    coarseQuadratureSize = (int)SQR(degree);
+    refineQuadratureSize = coarseQuadratureSize;
 
     interpolate.resize(coarseQuadratureSize, coarseQuadratureSize);
     makeLegendreMatrix(interpolate, degree, quadrature_rule_x , quadrature_rule_y, quadrature_rule_w);

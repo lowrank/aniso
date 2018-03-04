@@ -33,6 +33,8 @@ public:
     index_t np;
     index_t maxLevel;
 
+    vector<vector<vector<vector<vector<scalar_t > > > > > nearInteractions;
+
     scalar_t lineIntegral(point& p, point &q);
     scalar_t integral_helper(point& p, point &q);
 
@@ -43,7 +45,8 @@ public:
     void runKernelsFast(Vector& f);
 
     void nearRemoval(Vector& f);
-    void refineAddOn(Vector& f);
+    void refineAddOnCache(Vector& f);
+    void refineAddOnFast(Vector& f);
     void singularAdd(Vector& f);
 
     vector<Vector> sigma_t_coeff;

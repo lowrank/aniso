@@ -23,6 +23,9 @@
 #include "Quadrature.h"
 #include "utility/Profiler.h"
 
+#define DEFAULT_REFINE_LEVEL  2
+
+
 using namespace bbfmm;
 
 class Geometry  {
@@ -44,6 +47,9 @@ public:
     vector<scalar_t> refine_quad_x ;
     vector<scalar_t> refine_quad_y ;
     vector<scalar_t> refine_weight ;
+
+    int     coarseQuadratureSize;
+    int     refineQuadratureSize;
 
     Matrix interpolate;
     Matrix nearMapping;
