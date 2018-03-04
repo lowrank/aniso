@@ -41,6 +41,10 @@ public:
 
     Quadrature volQuadratureRule;
 
+    vector<scalar_t> refine_quad_x ;
+    vector<scalar_t> refine_quad_y ;
+    vector<scalar_t> refine_weight ;
+
     Matrix interpolate;
     Matrix nearMapping;
     Vector sqrtWeights;

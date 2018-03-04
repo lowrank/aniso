@@ -202,6 +202,10 @@ scalar_t KernelFactory::integral_helper(point &p, point &q) {
     return integral_helper(p.x, p.y, q.x, q.y);
 }
 
+
+/// generate the kernels.
+/// \param
+/// \return
 void KernelFactory::makeKernels() {
     for (int i = 0; i < kernelSize; ++i) {
         // capture this and the kernel index
@@ -214,6 +218,8 @@ void KernelFactory::makeKernels() {
     }
 }
 
+
+/// \param f
 void KernelFactory::runKernels(Vector& f) {
     // not finished yet.
     for (int i = 0; i < kernelSize; ++i) {
@@ -225,8 +231,9 @@ void KernelFactory::runKernels(Vector& f) {
         std::cout << ret(0) << " " << ret(nodes.size()/2)<<std::endl;
     }
 }
-
-
+/// input can be 0 vector only to cache the kernels.
+/// f can be dropped.
+/// \param f
 void KernelFactory::runKernelsCache(Vector& f) {
     // not finished yet.
     for (int i = 0; i < kernelSize; ++i) {
@@ -240,7 +247,8 @@ void KernelFactory::runKernelsCache(Vector& f) {
     }
 }
 
-
+/// Run the kernels with rhs sources. Should be something like Toeplitz matrix product.
+/// \param f
 void KernelFactory::runKernelsFast(Vector& f) {
     // not finished yet.
     for (int i = 0; i < kernelSize; ++i) {
@@ -253,19 +261,29 @@ void KernelFactory::runKernelsFast(Vector& f) {
         std::cout << ret(0) << " " << ret(nodes.size()/2) <<std::endl;
     }
 }
-
+/// get the row number for y coordinate
+/// \param y
+/// \return
 int  KernelFactory::getRow(double y)  {
     return int(floor(y * sz));
 }
 
+/// get the col number for x coordinate
+/// \param x
+/// \return
 int  KernelFactory::getCol(double x)  {
     return int(floor(x * sz));
 }
 
+/// costy, remove all nearby interactions.
+/// \param f
 void KernelFactory::nearRemoval(Vector &f) {
     for (int i = 0; i < kernelSize; ++i) {
         Vector ret((int) nodes.size());
         setValue(ret, 0.);
+#ifdef RUN_OMP
+#pragma omp parallel for schedule(static, CHUNKSIZE) collapse(2) num_threads(omp_get_max_threads())
+#endif
         for (int targetSquareId = 0; targetSquareId < numberOfSquares; ++targetSquareId) {
             for (int targetQuadratureId = 0; targetQuadratureId < SQR(deg); ++targetQuadratureId) {
 
@@ -293,12 +311,49 @@ void KernelFactory::nearRemoval(Vector &f) {
             }
         }
         std::cout << ret(0) << " " << ret(nodes.size()/2)<<std::endl;
-
     }
 }
 
+/// costy, add refined interactions.
+/// \param f
 void KernelFactory::refineAddOn(Vector &f) {
+    for (int i = 0; i < kernelSize; ++i) {
+        Vector ret((int) nodes.size());
+        setValue(ret, 0.);
 
+#ifdef RUN_OMP
+#pragma omp parallel for schedule(static, CHUNKSIZE) collapse(2) num_threads(omp_get_max_threads())
+#endif
+        for (int targetSquareId = 0; targetSquareId < numberOfSquares; ++targetSquareId) {
+            for (int targetQuadratureId = 0; targetQuadratureId < SQR(deg); ++targetQuadratureId) {
+
+                int targetId = (int) (targetSquareId * (SQR(deg)) + targetQuadratureId);
+                int targetSquareRow = targetSquareId / sz;
+                int targetSquareCol = targetSquareId - sz * targetSquareRow;
+
+                for (int nearSourceSquareRowId = -1; nearSourceSquareRowId < 2; ++nearSourceSquareRowId) {
+                    for (int nearSourceSquareColId = -1; nearSourceSquareColId < 2; ++nearSourceSquareColId) {
+                        int nearSourceSquareId = targetSquareId + nearSourceSquareRowId * sz + nearSourceSquareColId;
+
+                        if (nearSourceSquareId == targetSquareId) continue;
+
+                        if (nearSourceSquareRowId + targetSquareRow >= 0 &&
+                            nearSourceSquareRowId + targetSquareRow < sz) {
+                            if (nearSourceSquareColId + targetSquareCol >= 0 &&
+                                nearSourceSquareColId + targetSquareCol < sz) {
+
+
+
+                                // refinement here
+
+
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 void KernelFactory::singularAdd(Vector &f) {
