@@ -435,8 +435,6 @@ void KernelFactory::refineAddOnFast(Vector &f) {
                                             (0.5 + (targetSquareCol + nearSourceSquareColId )) * dx + 0.5 * (mu) * dx
                                     };
 
-                                    // Cache the nearRefinement interaction.
-                                    //nearInteractions[i][targetId][nearSourceSquareRowId][nearSourceSquareColId][nearSourceQuadratureId] = realParts[i].eval(cur_nearSourcePoint, nodes[targetId]);
                                     ret(targetId) += nearInteractions[i][targetId][nearSourceSquareRowId+1][nearSourceSquareColId+1][nearSourceQuadratureId]
                                                      * sqrt(w) * newValues(nearSourceQuadratureId);
 
