@@ -33,10 +33,10 @@ public:
     index_t np;
     index_t maxLevel;
 
+    // a redundant storage. O(KernelSize * numberOfNodes * 9 * RefineQuadrature = K * 4^L * N^2 * Q^2 * 9)
     vector<vector<vector<vector<vector<scalar_t > > > > > nearInteractions;
 
     scalar_t lineIntegral(point& p, point &q);
-    scalar_t integral_helper(point& p, point &q);
 
     void interpolation();
     void makeKernels();
