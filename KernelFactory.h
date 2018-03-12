@@ -43,17 +43,17 @@ public:
 
     void singPrecompute();
     void makeKernels();
-    void runKernels(Vector& f);
-    void runKernelsCache(Vector& f);
-    void runKernelsFast(Vector& f);
+    void runKernels(Vector& f, Vector& ret);
+    void runKernelsCache(Vector& f, Vector& ret);
+    void runKernelsFast(Vector& f, Vector& ret);
 
-    void nearRemoval(Vector& f);
-    void refineAddOnCache(Vector& f);
-    void refineAddOnFast(Vector& f);
-    void singularAdd(Vector &f, vector<Vector>& f_coeff);
+    void nearRemoval(Vector& f, Vector& ret);
+    void refineAddOnCache(Vector& f, Vector& ret);
+    void refineAddOnFast(Vector& f, Vector& ret);
+    void singularAdd(vector<Vector>& f_coeff, Vector& ret);
 
-    vector<Vector> sigma_t_coeff;
-    vector<Vector> sigma_s_coeff;
+    vector<Vector> sigma_t_Coeff;
+    vector<Vector> sigma_s_Coeff;
 
 
 

@@ -22,12 +22,12 @@ KernelFactory::KernelFactory(int geometry_size, int geometry_degree, int kernel_
     sigma_s.resize(numberOfNodes);
     sigma_t.resize(numberOfNodes);
 
-    sigma_s_coeff.resize((unsigned long) numberOfSquares);
-    sigma_t_coeff.resize((unsigned long) numberOfSquares);
+    sigma_s_Coeff.resize((unsigned long) numberOfSquares);
+    sigma_t_Coeff.resize((unsigned long) numberOfSquares);
 
     for (int i = 0; i < numberOfSquares; ++i) {
-        sigma_s_coeff[i].resize(SQR(deg));
-        sigma_t_coeff[i].resize(SQR(deg));
+        sigma_s_Coeff[i].resize(SQR(deg));
+        sigma_t_Coeff[i].resize(SQR(deg));
     }
 
 
@@ -178,7 +178,7 @@ scalar_t KernelFactory::integral_helper(double x0, double y0, double x1, double 
                 load(n * deg + k) = legendre((unsigned int) n, x) * legendre((unsigned int) k, y) / legendreNorms(n * deg + k);
             }
         }
-        ret += ddot(load, sigma_t_coeff[col * sz + row]) * volQuadratureRule.weights[i];
+        ret += ddot(load, sigma_t_Coeff[col * sz + row]) * volQuadratureRule.weights[i];
     }
     return ret * sqrt(SQR(x0 - x1) + SQR(y0 - y1))/2.0;
 }
@@ -192,8 +192,8 @@ void KernelFactory::interpolation() {
             load_t(j) = sqrtWeights(j) * sigma_t(i * SQR(deg) + j);
             load_s(j) = sqrtWeights(j) * sigma_s(i * SQR(deg) + j);
         }
-        dgemv(1.0, interpolate, load_t, 0, sigma_t_coeff[i]);
-        dgemv(1.0, interpolate, load_s, 0, sigma_s_coeff[i]);
+        dgemv(1.0, interpolate, load_t, 0, sigma_t_Coeff[i]);
+        dgemv(1.0, interpolate, load_s, 0, sigma_s_Coeff[i]);
     }
 }
 
@@ -222,45 +222,44 @@ void KernelFactory::makeKernels() {
 
 
 /// \param f
-void KernelFactory::runKernels(Vector& f) {
+void KernelFactory::runKernels(Vector& f, Vector& ret) {
     // not finished yet.
     for (int i = 0; i < kernelSize; ++i) {
         realParts[i].initialize(np, nodes, nodes, f,
                                 (index_t) nodes.size(),
                                 (index_t) nodes.size(), np * np, maxLevel);
-        Vector ret;
         realParts[i].run(ret);
-        std::cout << std::setprecision(16)  << ret(0) << " " << ret((int) (nodes.size() / 2)) << std::endl;
+        //std::cout << std::setprecision(16)  << ret(0) << " " << ret((int) (nodes.size() / 2)) << std::endl;
     }
 }
 /// input can be 0 vector only to cache the kernels.
 /// f can be dropped.
 /// \param f
-void KernelFactory::runKernelsCache(Vector& f) {
+void KernelFactory::runKernelsCache(Vector& f, Vector& ret) {
     // not finished yet.
     for (int i = 0; i < kernelSize; ++i) {
         realParts[i].initialize(np, nodes, nodes, f,
                                 (index_t) nodes.size(),
                                 (index_t) nodes.size(), np * np, maxLevel);
-        Vector ret;
+
         realParts[i].runCache(ret);
 
-        std::cout << std::setprecision(16) << ret(0) << " " << ret((int) (1))  << std::endl;
+        //std::cout << std::setprecision(16) << ret(0) << " " << ret((int) (1))  << std::endl;
     }
 }
 
 /// Run the kernels with rhs sources. Should be something like Toeplitz matrix product.
 /// \param f
-void KernelFactory::runKernelsFast(Vector& f) {
+void KernelFactory::runKernelsFast(Vector& f, Vector& ret) {
     // not finished yet.
     for (int i = 0; i < kernelSize; ++i) {
         realParts[i].initialize(np, nodes, nodes, f,
                                 (index_t) nodes.size(),
                                 (index_t) nodes.size(), np * np, maxLevel);
 
-        Vector ret;
+
         realParts[i].runFast(ret);
-        std::cout << std::setprecision(16)  << ret(0) << " " << ret((int) (1))  << std::endl;
+        //std::cout << std::setprecision(16)  << ret(0) << " " << ret((int) (1))  << std::endl;
     }
 }
 /// get the row number for y coordinate
@@ -279,10 +278,8 @@ int  KernelFactory::getCol(double x)  {
 
 /// costy, remove all nearby interactions.
 /// \param f
-void KernelFactory::nearRemoval(Vector &f) {
+void KernelFactory::nearRemoval(Vector &f, Vector& ret) {
     for (int i = 0; i < kernelSize; ++i) {
-        Vector ret((int) nodes.size());
-        setValue(ret, 0.);
 #ifdef RUN_OMP
 #pragma omp parallel for schedule(static, CHUNKSIZE) collapse(2) num_threads(omp_get_max_threads())
 #endif
@@ -304,7 +301,7 @@ void KernelFactory::nearRemoval(Vector &f) {
                                 for (int nearSourceQuadratureId = 0;
                                      nearSourceQuadratureId < SQR(deg); ++nearSourceQuadratureId) {
                                     int nearSourceId = nearSourceSquareId * (SQR(deg)) + nearSourceQuadratureId;
-                                    ret(targetId) +=
+                                    ret(targetId) -=
                                             realParts[i].eval(nodes[nearSourceId], nodes[targetId]) * f(nearSourceId);
 
                                 }
@@ -315,17 +312,14 @@ void KernelFactory::nearRemoval(Vector &f) {
 
             }
         }
-        std::cout << std::setprecision(16) << ret(0) << " " << ret((int) (1))  << std::endl;
+        //std::cout << std::setprecision(16) << ret(0) << " " << ret((int) (1))  << std::endl;
     }
 }
 
 /// costy, add refined interactions.
 /// \param f
-void KernelFactory::refineAddOnCache(Vector &f) {
+void KernelFactory::refineAddOnCache(Vector &f, Vector& ret) {
     for (int i = 0; i < kernelSize; ++i) {
-        Vector ret((int) nodes.size());
-        setValue(ret, 0.);
-
 #ifdef RUN_OMP
 #pragma omp parallel for schedule(static, CHUNKSIZE) collapse(2) num_threads(omp_get_max_threads())
 #endif
@@ -382,16 +376,13 @@ void KernelFactory::refineAddOnCache(Vector &f) {
                 }
             }
         }
-        std::cout << std::setprecision(16) << ret(0) << " " << ret((int) (1))  << std::endl;
+        //std::cout << std::setprecision(16) << ret(0) << " " << ret((int) (1))  << std::endl;
     }
 }
 
 
-void KernelFactory::refineAddOnFast(Vector &f) {
+void KernelFactory::refineAddOnFast(Vector &f, Vector& ret) {
     for (int i = 0; i < kernelSize; ++i) {
-        Vector ret((int) nodes.size());
-        setValue(ret, 0.);
-
 #ifdef RUN_OMP
 #pragma omp parallel for schedule(static, CHUNKSIZE) collapse(2) num_threads(omp_get_max_threads())
 #endif
@@ -446,14 +437,12 @@ void KernelFactory::refineAddOnFast(Vector &f) {
                 }
             }
         }
-        std::cout << std::setprecision(16) << ret(0) << " " << ret((int) (1))  << std::endl;
+        //std::cout << std::setprecision(16) << ret(0) << " " << ret((int) (1))  << std::endl;
     }
 }
 
-void KernelFactory::singularAdd(Vector &f, vector<Vector>& f_coeff) {
+void KernelFactory::singularAdd(vector<Vector>& f_coeff, Vector& ret) {
     for (int i = 0; i < kernelSize; ++i) {
-        Vector ret((int) nodes.size());
-        setValue(ret, 0.);
         // no precomputation is acceptable.
 #ifdef RUN_OMP
 #pragma omp parallel for schedule(static, CHUNKSIZE)  num_threads(omp_get_max_threads())
@@ -487,7 +476,7 @@ void KernelFactory::singularAdd(Vector &f, vector<Vector>& f_coeff) {
             }
         }
 
-        std::cout << std::setprecision(16) << ret(0) << " " << ret((int) (1)) << std::endl;
+        //std::cout << std::setprecision(16) << ret(0) << " " << ret((int) (1)) << std::endl;
     }
 }
 
@@ -633,3 +622,4 @@ void KernelFactory::interpolation(Vector &h, vector<Vector> &h_coeff) {
         dgemv(1.0, interpolate, h_t, 0, h_coeff[i]);
     }
 }
+

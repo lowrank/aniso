@@ -1,6 +1,7 @@
 #include <iostream>
 #include "Aniso.h"
 #include "utility/config.h"
+#include "gmres.h"
 
 int main(int argc, char* argv[]) {
 #ifdef RUN_OMP
@@ -21,78 +22,121 @@ int main(int argc, char* argv[]) {
 
     Profiler timer;
 
-    vector<scalar_t > a,b,c;
-
-    aniso.duffy_transform({0, 0,  1. , 0  , 1. ,   1.}, a,b,c);
-
-    for (auto cc : c) {
-        std::cout << cc << std::endl;
-    }
-
     // load function.
-    setValue(aniso.sigma_t, 40.2);
-    setValue(aniso.sigma_s, 40.0);
+    setValue(aniso.sigma_t, 20.2);
+    setValue(aniso.sigma_s, 20.0);
 
+
+    timer.tic("interpolate sigma");
     aniso.interpolation();
+    timer.toc();
 
-    Vector f(aniso.numberOfNodes);
-    Vector h(aniso.numberOfNodes);
-    vector<Vector> h_coeff;
-
-    setValue(f, 1.);
-
-    for (int i = 0; i < aniso.nodes.size(); ++i) {
-        h(i) = f(i);
-        f(i) = f(i) * aniso.weights[i];
-    }
-
-    aniso.interpolation(h, h_coeff);
-    std::cout << h_coeff[0] << std::endl;
-
-    timer.tic("?");
+    timer.tic("precompute singular integral");
     aniso.singPrecompute();
     timer.toc();
 
-    scalar_t s = 0.;
-    for (int i = 0; i < aniso.singW[0].size(); ++i) {
-        s += aniso.singW[0][i];
+    timer.tic("generate kernels");
+    aniso.makeKernels();
+    timer.toc();
+
+    auto cache_mapping = [&](Vector& charge) {
+        assert(charge.row() == aniso.nodes.size());
+        Vector scaledFunction(aniso.numberOfNodes);
+        Vector unscaledFunction(aniso.numberOfNodes);
+        Vector output;
+
+        vector<Vector> unscaledCoefficient;
+        for (int i = 0; i < aniso.nodes.size(); ++i) {
+            unscaledFunction(i) = charge(i);
+            scaledFunction(i) = charge(i) * aniso.weights[i];
+        }
+
+        timer.tic("interpolate source");
+        aniso.interpolation(unscaledFunction, unscaledCoefficient);
+        timer.toc();
+
+        timer.tic("Cache");
+        aniso.runKernelsCache(scaledFunction, output);
+        timer.toc();
+
+        timer.tic("Removal");
+        aniso.nearRemoval(scaledFunction, output);
+        timer.toc();
+
+        timer.tic("NearAddOn Cache");
+        aniso.refineAddOnCache(scaledFunction, output);
+        timer.toc();
+
+        timer.tic("SingularAddOn");
+        aniso.singularAdd(unscaledCoefficient, output);
+        timer.toc();
+
+        return output;
+    };
+
+    auto apply_mapping = [&](Vector& charge) {
+        assert(charge.row() == aniso.nodes.size());
+        Vector scaledFunction(aniso.numberOfNodes);
+        Vector unscaledFunction(aniso.numberOfNodes);
+        Vector output;
+
+        vector<Vector> unscaledCoefficient;
+        for (int i = 0; i < aniso.nodes.size(); ++i) {
+            unscaledFunction(i) = charge(i);
+            scaledFunction(i) = charge(i) * aniso.weights[i];
+        }
+
+        timer.tic("interpolate source");
+        aniso.interpolation(unscaledFunction, unscaledCoefficient);
+        timer.toc();
+
+        timer.tic("Apply Fast");
+        aniso.runKernelsFast(scaledFunction, output);
+        timer.toc();
+
+        timer.tic("Removal");
+        aniso.nearRemoval(scaledFunction, output);
+        timer.toc();
+
+        timer.tic("NearAddOn Fast");
+        aniso.refineAddOnFast(scaledFunction, output);
+        timer.toc();
+
+        timer.tic("SingularAddOn");
+        aniso.singularAdd(unscaledCoefficient, output);
+        timer.toc();
+
+        return output;
+    };
+
+    Vector charge(aniso.numberOfNodes);
+    setValue(charge, 1.0);
+
+    Vector output = cache_mapping(charge);
+
+    for (int i = 0; i < aniso.numberOfNodes; ++i) {
+        output(i) = output(i) / (2 * M_PI);
     }
 
-    std::cout << s << std::endl;
+    auto forwardOperator = [&](Vector& scaledCharge) {
+        Vector load(aniso.numberOfNodes);
+        // there are faster ways
+        for (int i = 0; i < aniso.numberOfNodes; ++i) {
+            load(i) = scaledCharge(i) * aniso.sigma_s(i);
+        }
+        Vector scatter = apply_mapping(load);
 
-    aniso.makeKernels();
+        // there are faster ways
+        for (int i = 0; i < aniso.numberOfNodes; ++i) {
+            scatter(i) = scaledCharge(i) - scatter(i) / (2 * M_PI);
+        }
 
+        return scatter;
+    };
 
-
-//    timer.tic("Normal");
-//    aniso.runKernels(f);
-//    timer.toc();
-
-#ifdef BBFMM_CACHE
-    timer.tic("Cache");
-    aniso.runKernelsCache(f);
-    timer.toc();
-
-    timer.tic("Apply");
-    aniso.runKernelsFast(f);
-    timer.toc();
-#endif
-
-    timer.tic("Removal");
-    aniso.nearRemoval(f);
-    timer.toc();
-
-    timer.tic("NearAddOn Cache");
-    aniso.refineAddOnCache(f);
-    timer.toc();
-
-    timer.tic("NearAddOn Fast");
-    aniso.refineAddOnFast(f);
-    timer.toc();
-
-    timer.tic("SingularAddOn");
-    aniso.singularAdd(f, h_coeff);
-    timer.toc();
+    Vector x(aniso.numberOfNodes);
+    setValue(x, 0.);
+    GMRES(forwardOperator, x, output, 20, 400, 1e-14);
 
     aniso.displayKernelCacheSize();
 

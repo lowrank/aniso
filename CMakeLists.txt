@@ -12,6 +12,7 @@ set(SOURCE_FILES main.cpp
         bbfmm/bbfmm.h bbfmm/blas_wrapper.cpp
         bbfmm/linalg.h bbfmm/utils.h utility/Profiler.h
         utility/config.cpp utility/config.h
+        gmres.h gmres.cpp
         )
 add_executable(aniso2 ${SOURCE_FILES})
 
