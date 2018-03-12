@@ -24,7 +24,6 @@ public:
 
     Vector anisotropy;
 
-    Quadrature lineQuadratureRule;
     Quadrature singQuadratureRule;
 
     Vector sigma_t;
@@ -35,10 +34,14 @@ public:
 
     // a redundant storage. O(KernelSize * numberOfNodes * 9 * RefineQuadrature = K * 4^L * N^2 * Q^2 * 9)
     vector<vector<vector<vector<vector<scalar_t > > > > > nearInteractions;
+    vector<vector<scalar_t>> singX, singY, singW;
 
     scalar_t lineIntegral(point& p, point &q);
 
     void interpolation();
+    void interpolation(Vector& h, vector<Vector>& h_coeff);
+
+    void singPrecompute();
     void makeKernels();
     void runKernels(Vector& f);
     void runKernelsCache(Vector& f);
@@ -53,12 +56,15 @@ public:
     vector<Vector> sigma_s_coeff;
 
 
+
     scalar_t lineIntegral(double x0, double y0, double x1, double y1);
     scalar_t integral_helper(double x0, double y0, double x1, double y1);
 
     int getRow(double y) ;
 
     int getCol(double x) ;
+
+    void duffy_transform(vector<scalar_t> points, vector<scalar_t> &X, vector<scalar_t> &Y, vector<scalar_t> &W);
 
 
 };

@@ -19,6 +19,16 @@ int main(int argc, char* argv[]) {
 
     Aniso aniso(domain_size, quadrature_rule,  kernel_size, anisotropy, singular_rule, fmm_np, fmm_maxLevel);
 
+    Profiler timer;
+
+    vector<scalar_t > a,b,c;
+
+    aniso.duffy_transform({0, 0,  1. , 0  , 1. ,   1.}, a,b,c);
+
+    for (auto cc : c) {
+        std::cout << cc << std::endl;
+    }
+
     // load function.
     setValue(aniso.sigma_t, 40.2);
     setValue(aniso.sigma_s, 40.0);
@@ -26,14 +36,33 @@ int main(int argc, char* argv[]) {
     aniso.interpolation();
 
     Vector f(aniso.numberOfNodes);
+    Vector h(aniso.numberOfNodes);
+    vector<Vector> h_coeff;
+
     setValue(f, 1.);
+
     for (int i = 0; i < aniso.nodes.size(); ++i) {
+        h(i) = f(i);
         f(i) = f(i) * aniso.weights[i];
     }
 
+    aniso.interpolation(h, h_coeff);
+    std::cout << h_coeff[0] << std::endl;
+
+    timer.tic("?");
+    aniso.singPrecompute();
+    timer.toc();
+
+    scalar_t s = 0.;
+    for (int i = 0; i < aniso.singW[0].size(); ++i) {
+        s += aniso.singW[0][i];
+    }
+
+    std::cout << s << std::endl;
+
     aniso.makeKernels();
 
-    Profiler timer;
+
 
 //    timer.tic("Normal");
 //    aniso.runKernels(f);
@@ -59,6 +88,10 @@ int main(int argc, char* argv[]) {
 
     timer.tic("NearAddOn Fast");
     aniso.refineAddOnFast(f);
+    timer.toc();
+
+    timer.tic("SingularAddOn");
+    aniso.singularAdd(f);
     timer.toc();
 
     aniso.displayKernelCacheSize();

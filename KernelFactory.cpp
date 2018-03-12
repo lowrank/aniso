@@ -12,12 +12,11 @@ KernelFactory::KernelFactory(int geometry_size, int geometry_degree, int kernel_
     kernelSize = 2 * kernel_size - 1;
 
     get_legendre_data((size_t) kernel_degree, singQuadratureRule); // Duffy
-    get_legendre_data((size_t) geometry_degree, lineQuadratureRule); // Usual case
+    affine(singQuadratureRule);
 
     for (int i = 0; i < kernel_size; ++i) {
         anisotropy(i) = (pow(kernel_g, i) - pow(kernel_g, kernel_size))/(1 - pow(kernel_g, kernel_size));
     }
-
 
     // set sigma_s, sigma_t.
     sigma_s.resize(numberOfNodes);
@@ -30,6 +29,8 @@ KernelFactory::KernelFactory(int geometry_size, int geometry_degree, int kernel_
         sigma_s_coeff[i].resize(SQR(deg));
         sigma_t_coeff[i].resize(SQR(deg));
     }
+
+
 
     nearInteractions.resize((unsigned long) kernelSize);
     for (int kernelId = 0; kernelId < kernelSize; ++kernelId) {
@@ -229,7 +230,7 @@ void KernelFactory::runKernels(Vector& f) {
                                 (index_t) nodes.size(), np * np, maxLevel);
         Vector ret;
         realParts[i].run(ret);
-        std::cout << ret(0) << " " << ret((int) (nodes.size() / 2)) << std::endl;
+        std::cout << std::setprecision(16)  << ret(0) << " " << ret((int) (nodes.size() / 2)) << std::endl;
     }
 }
 /// input can be 0 vector only to cache the kernels.
@@ -244,7 +245,7 @@ void KernelFactory::runKernelsCache(Vector& f) {
         Vector ret;
         realParts[i].runCache(ret);
 
-        std::cout << ret(0) << " " << ret((int) (nodes.size() / 2)) << std::endl;
+        std::cout << std::setprecision(16) << ret(0) << " " << ret((int) (nodes.size() / 2)) << std::endl;
     }
 }
 
@@ -259,7 +260,7 @@ void KernelFactory::runKernelsFast(Vector& f) {
 
         Vector ret;
         realParts[i].runFast(ret);
-        std::cout << ret(0) << " " << ret((int) (nodes.size() / 2)) << std::endl;
+        std::cout << std::setprecision(16)  << ret(0) << " " << ret((int) (nodes.size() / 2)) << std::endl;
     }
 }
 /// get the row number for y coordinate
@@ -314,7 +315,7 @@ void KernelFactory::nearRemoval(Vector &f) {
 
             }
         }
-        std::cout << ret(0) << " " << ret((int) (nodes.size() / 2)) << std::endl;
+        std::cout << std::setprecision(16) << ret(0) << " " << ret((int) (nodes.size() / 2)) << std::endl;
     }
 }
 
@@ -450,5 +451,165 @@ void KernelFactory::refineAddOnFast(Vector &f) {
 }
 
 void KernelFactory::singularAdd(Vector &f) {
+    for (int i = 0; i < kernelSize; ++i) {
+        Vector ret((int) nodes.size());
+        setValue(ret, 0.);
+        // no precomputation is acceptable.
+        for (int targetSquareId = 0; targetSquareId < numberOfSquares; ++targetSquareId) {
+            for (int targetQuadratureId = 0; targetQuadratureId < SQR(deg); ++targetQuadratureId) {
 
+                int targetId = targetSquareId * (SQR(deg)) + targetQuadratureId;
+
+                for (int sourceQuadratureId = 0; sourceQuadratureId < SQR(deg); ++sourceQuadratureId) {
+                    int sourceId = targetSquareId * (SQR(deg)) + sourceQuadratureId;
+                    ret(targetId) += realParts[i].eval(nodes[sourceId], nodes[targetId]) * f(sourceId);
+                }
+            }
+        }
+
+        std::cout << std::setprecision(16) << ret(0) << " " << ret((int) (nodes.size() / 2)) << std::endl;
+    }
+}
+
+
+void KernelFactory::duffy_transform(vector<scalar_t> points, vector<scalar_t> &X, vector<scalar_t> &Y, vector<scalar_t> &W) {
+
+    scalar_t a = points[0];
+    scalar_t b = points[1];
+
+    scalar_t a11 = points[2] - points[0];
+    scalar_t a12 = points[4] - points[2];
+    scalar_t a21 = points[3] - points[1];
+    scalar_t a22 = points[5] - points[3];
+
+    Matrix A(2, 2);
+    A(0, 0) = a11;
+    A(0, 1) = a12;
+    A(1, 0) = a21;
+    A(1, 1) = a22;
+
+    scalar_t detA = a11 * a22 - a12 * a21;
+
+    size_t nsp =singQuadratureRule.points_x.size();
+
+    vector<scalar_t> sx(nsp * nsp);
+    vector<scalar_t> sy(nsp * nsp);
+    vector<scalar_t> sw(nsp * nsp);
+
+
+    int id = 0;
+    for (int ri = 0; ri < nsp; ++ri) {
+        for (int ci = 0; ci < nsp; ++ci) {
+            sx[id] = singQuadratureRule.points_x[ri];
+            sy[id] = singQuadratureRule.points_x[ci];
+            sw[id++] = singQuadratureRule.weights[ri] * singQuadratureRule.weights[ci];
+        }
+    }
+
+    vector<scalar_t> Z1x(nsp * nsp);
+    vector<scalar_t> Z1y(nsp * nsp);
+    vector<scalar_t> Z1w(nsp * nsp);
+
+    X.resize(nsp * nsp);
+    Y.resize(nsp * nsp);
+    W.resize(nsp * nsp);
+
+
+    for (int i = 0; i < nsp * nsp; ++i) {
+        scalar_t u = sx[i];
+        scalar_t v = sy[i];
+        scalar_t w = sw[i];
+
+        Z1x[i] = u;
+        Z1y[i] = u * v;
+        Z1w[i] = w * u;
+
+        u = Z1x[i];
+        v = Z1y[i];
+        w = Z1w[i];
+
+        scalar_t x = a11 * u + a12 * v + a;
+        scalar_t y = a21 * u + a22 * v + b;
+        scalar_t wr = detA * w;
+
+        X[i] = x;
+        Y[i] = y;
+        W[i] = wr;
+    }
+}
+
+void KernelFactory::singPrecompute() {
+    vector<vector< vector<scalar_t > >> X, Y, W;
+
+    X.resize((unsigned long) SQR(deg));
+    Y.resize((unsigned long) SQR(deg));
+    W.resize((unsigned long) SQR(deg));
+
+    for (int targetId = 0; targetId < SQR(deg); ++targetId) {
+        X[targetId].resize(8); Y[targetId].resize(8); W[targetId].resize(8);
+    }
+
+    for (int targetQuadratureRowId = 0; targetQuadratureRowId < deg; ++targetQuadratureRowId) {
+        for (int targetQuadratureColId = 0; targetQuadratureColId < deg; ++targetQuadratureColId) {
+
+            int targetId = targetQuadratureRowId * deg + targetQuadratureColId;
+
+            scalar_t x = volQuadratureRule.points_x[targetQuadratureRowId];
+            scalar_t y = volQuadratureRule.points_x[targetQuadratureColId];
+
+            // 8 triangles.
+            // 1st. x,y -- 1, y -- 1,1
+            // 2nd, x,y -- 1,1 -- x, 1
+            // 3rd, x,y -- x, 1 -- -1,1
+            // 4th, x,y -- -1,1 -- -1, y
+            // 5th, x,y -- -1,y -- -1,-1
+            // 6th, x,y -- -1,-1 -- x, -1
+            // 7th, x,y -- x, -1 -- 1,-1
+            // 8th, x,y -- 1,-1 -- 1, y
+
+            duffy_transform({x, y, 1. , y  , 1. ,   1.}, X[targetId][0], Y[targetId][0], W[targetId][0]);
+            duffy_transform({x, y, 1. , 1  , x  ,   1.}, X[targetId][1], Y[targetId][1], W[targetId][1]);
+            duffy_transform({x, y, x  , 1. , -1.,   1.}, X[targetId][2], Y[targetId][2], W[targetId][2]);
+            duffy_transform({x, y, -1., 1. , -1.,    y}, X[targetId][3], Y[targetId][3], W[targetId][3]);
+            duffy_transform({x, y, -1., y  , -1.,  -1.}, X[targetId][4], Y[targetId][4], W[targetId][4]);
+            duffy_transform({x, y, -1., -1 , x  ,  -1.}, X[targetId][5], Y[targetId][5], W[targetId][5]);
+            duffy_transform({x, y, x  , -1., 1. ,  -1.}, X[targetId][6], Y[targetId][6], W[targetId][6]);
+            duffy_transform({x, y, 1. , -1 , 1. ,    y}, X[targetId][7], Y[targetId][7], W[targetId][7]);
+        }
+    }
+
+    singX.resize((unsigned long) SQR(deg));
+    singY.resize((unsigned long) SQR(deg));
+    singW.resize((unsigned long) SQR(deg));
+
+    for (int targetId = 0; targetId < SQR(deg); targetId++) {
+        singX[targetId].resize(8 * SQR(singQuadratureRule.weights.size()));
+        singY[targetId].resize(8 * SQR(singQuadratureRule.weights.size()));
+        singW[targetId].resize(8 * SQR(singQuadratureRule.weights.size()));
+        for (int triId = 0; triId < 8; ++triId) {
+            for (int quadId = 0; quadId < SQR(singQuadratureRule.weights.size()); ++quadId) {
+                singX[targetId][triId * SQR(singQuadratureRule.weights.size()) + quadId] = X[targetId][triId][quadId];
+                singY[targetId][triId * SQR(singQuadratureRule.weights.size()) + quadId] = Y[targetId][triId][quadId];
+                singW[targetId][triId * SQR(singQuadratureRule.weights.size()) + quadId] = W[targetId][triId][quadId];
+            }
+        }
+    }
+
+}
+
+void KernelFactory::interpolation(Vector &h, vector<Vector> &h_coeff) {
+    // coefficients
+    h_coeff.resize((unsigned long) numberOfSquares);
+    for (int i = 0; i < numberOfSquares; ++i) {
+        h_coeff[i].resize(SQR(deg));
+    }
+
+    Vector h_t(SQR(deg));
+#pragma omp parallel for
+    for (int i = 0; i < numberOfSquares;++i) {
+        for (int j = 0; j < SQR(deg);++j) {
+            h_t(j) = sqrtWeights(j) * h(i * SQR(deg) + j);
+        }
+        dgemv(1.0, interpolate, h_t, 0, h_coeff[i]);
+    }
 }
