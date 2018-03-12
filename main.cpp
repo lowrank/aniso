@@ -91,7 +91,7 @@ int main(int argc, char* argv[]) {
     timer.toc();
 
     timer.tic("SingularAddOn");
-    aniso.singularAdd(f);
+    aniso.singularAdd(f, h_coeff);
     timer.toc();
 
     aniso.displayKernelCacheSize();

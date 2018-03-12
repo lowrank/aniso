@@ -245,7 +245,7 @@ void KernelFactory::runKernelsCache(Vector& f) {
         Vector ret;
         realParts[i].runCache(ret);
 
-        std::cout << std::setprecision(16) << ret(0) << " " << ret((int) (nodes.size() / 2)) << std::endl;
+        std::cout << std::setprecision(16) << ret(0) << " " << ret((int) (1))  << std::endl;
     }
 }
 
@@ -260,7 +260,7 @@ void KernelFactory::runKernelsFast(Vector& f) {
 
         Vector ret;
         realParts[i].runFast(ret);
-        std::cout << std::setprecision(16)  << ret(0) << " " << ret((int) (nodes.size() / 2)) << std::endl;
+        std::cout << std::setprecision(16)  << ret(0) << " " << ret((int) (1))  << std::endl;
     }
 }
 /// get the row number for y coordinate
@@ -315,7 +315,7 @@ void KernelFactory::nearRemoval(Vector &f) {
 
             }
         }
-        std::cout << std::setprecision(16) << ret(0) << " " << ret((int) (nodes.size() / 2)) << std::endl;
+        std::cout << std::setprecision(16) << ret(0) << " " << ret((int) (1))  << std::endl;
     }
 }
 
@@ -382,7 +382,7 @@ void KernelFactory::refineAddOnCache(Vector &f) {
                 }
             }
         }
-        std::cout << std::setprecision(16) << ret(0) << " " << ret((int) (nodes.size() / 2)) << std::endl;
+        std::cout << std::setprecision(16) << ret(0) << " " << ret((int) (1))  << std::endl;
     }
 }
 
@@ -446,28 +446,48 @@ void KernelFactory::refineAddOnFast(Vector &f) {
                 }
             }
         }
-        std::cout << std::setprecision(16) << ret(0) << " " << ret((int) (nodes.size() / 2)) << std::endl;
+        std::cout << std::setprecision(16) << ret(0) << " " << ret((int) (1))  << std::endl;
     }
 }
 
-void KernelFactory::singularAdd(Vector &f) {
+void KernelFactory::singularAdd(Vector &f, vector<Vector>& f_coeff) {
     for (int i = 0; i < kernelSize; ++i) {
         Vector ret((int) nodes.size());
         setValue(ret, 0.);
         // no precomputation is acceptable.
+#ifdef RUN_OMP
+#pragma omp parallel for schedule(static, CHUNKSIZE)  num_threads(omp_get_max_threads())
+#endif
         for (int targetSquareId = 0; targetSquareId < numberOfSquares; ++targetSquareId) {
+            int col = targetSquareId / sz;
+            int row = targetSquareId - col * sz;
             for (int targetQuadratureId = 0; targetQuadratureId < SQR(deg); ++targetQuadratureId) {
 
                 int targetId = targetSquareId * (SQR(deg)) + targetQuadratureId;
 
-                for (int sourceQuadratureId = 0; sourceQuadratureId < SQR(deg); ++sourceQuadratureId) {
-                    int sourceId = targetSquareId * (SQR(deg)) + sourceQuadratureId;
-                    ret(targetId) += realParts[i].eval(nodes[sourceId], nodes[targetId]) * f(sourceId);
+                for (int sourceQuadratureId = 0; sourceQuadratureId < 8 * SQR(singQuadratureRule.weights.size()); ++sourceQuadratureId) {
+                    // scaled coordinates
+                    scalar_t x =  (0.5 + col) * dx + 0.5 * (singX[targetQuadratureId][sourceQuadratureId]) * dx;
+                    scalar_t y =  (0.5 + row) * dx + 0.5 * (singY[targetQuadratureId][sourceQuadratureId]) * dx;
+                    scalar_t w = singW[targetQuadratureId][sourceQuadratureId] * SQR(dx) / 4.0;
+
+                    point cur_point = {x, y};
+
+                    Vector load(SQR(deg));
+                    for (int n = 0; n < deg; ++n) {
+                        for (int k = 0; k < deg; ++k) {
+                            load(n * deg + k) = legendre((unsigned int) n, x) * legendre((unsigned int) k, y) / legendreNorms(n * deg + k);
+                        }
+                    }
+
+                    ret(targetId) += ddot(load, f_coeff[col * sz + row]) *
+                            realParts[i].eval(cur_point, nodes[targetId]) * w;
+
                 }
             }
         }
 
-        std::cout << std::setprecision(16) << ret(0) << " " << ret((int) (nodes.size() / 2)) << std::endl;
+        std::cout << std::setprecision(16) << ret(0) << " " << ret((int) (1)) << std::endl;
     }
 }
 
@@ -539,7 +559,7 @@ void KernelFactory::duffy_transform(vector<scalar_t> points, vector<scalar_t> &X
 }
 
 void KernelFactory::singPrecompute() {
-    vector<vector< vector<scalar_t > >> X, Y, W;
+    vector<vector< vector<scalar_t > > > X, Y, W;
 
     X.resize((unsigned long) SQR(deg));
     Y.resize((unsigned long) SQR(deg));

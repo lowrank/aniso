@@ -50,7 +50,7 @@ public:
     void nearRemoval(Vector& f);
     void refineAddOnCache(Vector& f);
     void refineAddOnFast(Vector& f);
-    void singularAdd(Vector& f);
+    void singularAdd(Vector &f, vector<Vector>& f_coeff);
 
     vector<Vector> sigma_t_coeff;
     vector<Vector> sigma_s_coeff;
