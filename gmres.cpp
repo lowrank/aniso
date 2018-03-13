@@ -4,7 +4,7 @@
  * copyright@ Yimin Zhong. yzhong@math.utexas.edu. All Rights Reserved.
  *
  */
-
+//todo: preconditioner
 #include "gmres.h"
 
 using namespace bbfmm;

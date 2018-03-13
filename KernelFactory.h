@@ -34,6 +34,7 @@ public:
 
     // a redundant storage. O(KernelSize * numberOfNodes * 9 * RefineQuadrature = K * 4^L * N^2 * Q^2 * 9)
     vector<vector<vector<vector<vector<scalar_t > > > > > nearInteractions;
+    vector<vector<vector<scalar_t > > > singInteractions;
     vector<vector<scalar_t>> singX, singY, singW;
 
     scalar_t lineIntegral(point& p, point &q);
@@ -50,7 +51,8 @@ public:
     void nearRemoval(Vector& f, Vector& ret);
     void refineAddOnCache(Vector& f, Vector& ret);
     void refineAddOnFast(Vector& f, Vector& ret);
-    void singularAdd(vector<Vector>& f_coeff, Vector& ret);
+    void singularAddCache(vector<Vector>& f_coeff, Vector& ret);
+    void singularAddFast(vector<Vector>& f_coeff, Vector& ret);
 
     vector<Vector> sigma_t_Coeff;
     vector<Vector> sigma_s_Coeff;
