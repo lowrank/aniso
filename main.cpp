@@ -24,8 +24,30 @@ int main(int argc, char* argv[]) {
     Profiler timer;
 
     // load function.
-    setValue(aniso.sigma_t, 20.2);
-    setValue(aniso.sigma_s, 20.0);
+    Vector charge(aniso.numberOfNodes);
+
+    auto source_function = [&](scalar_t x, scalar_t y) {
+        scalar_t d = SQR(x - 0.5) + SQR(y - 0.5);
+        return exp(-25 * d);
+    };
+
+    auto scattering_function = [&](scalar_t x, scalar_t y) {
+        return 10 * 0.5 * (1 - cos(2 * M_PI * x)) ;
+    };
+
+    auto total_function = [&](scalar_t x, scalar_t y) {
+        return 10 * 0.5 * (1 - cos(2 * M_PI * x)) + 0.2;
+    };
+
+    for (int i = 0; i < aniso.nodes.size(); ++i) {
+        charge(i) = source_function(aniso.nodes[i].x, aniso.nodes[i].y);
+        aniso.sigma_t(i) = total_function(aniso.nodes[i].x, aniso.nodes[i].y) ;
+        aniso.sigma_s(i) = scattering_function(aniso.nodes[i].x, aniso.nodes[i].y) ;
+    }
+
+
+//    setValue(aniso.sigma_t, 10.2);
+//    setValue(aniso.sigma_s, 10.0);
 
 
     timer.tic("interpolate sigma");
@@ -45,7 +67,7 @@ int main(int argc, char* argv[]) {
         Vector scaledFunctionCache(aniso.numberOfNodes);
         Vector unscaledFunctionCache(aniso.numberOfNodes);
         Vector output_cache;
-
+        Vector output_non;
         vector<Vector> unscaledCoefficientCache;
         for (int i = 0; i < aniso.nodes.size(); ++i) {
             unscaledFunctionCache(i) = charge(i);
@@ -56,8 +78,12 @@ int main(int argc, char* argv[]) {
         aniso.interpolation(unscaledFunctionCache, unscaledCoefficientCache);
         timer.toc();
 
+        timer.tic("Non Singular");
+        aniso.runKernelsCache(scaledFunctionCache, output_non);
+        timer.toc();
+
         timer.tic("Cache");
-        aniso.runKernelsCache(scaledFunctionCache, output_cache);
+        aniso.runKernelsCacheSing(scaledFunctionCache, output_cache);
         timer.toc();
 
         timer.tic("Removal");
@@ -71,6 +97,8 @@ int main(int argc, char* argv[]) {
         timer.tic("SingularAddOn Cache");
         aniso.singularAddCache(unscaledCoefficientCache, output_cache);
         timer.toc();
+
+        daxpy(1.0, output_non, output_cache);
         dscal(M_1_PI/2.0, output_cache);
         return output_cache;
     };
@@ -80,6 +108,7 @@ int main(int argc, char* argv[]) {
         Vector scaledFunction(aniso.numberOfNodes);
         Vector unscaledFunction(aniso.numberOfNodes);
         Vector output;
+        Vector output_s;
 
         vector<Vector> unscaledCoefficient;
         for (int i = 0; i < aniso.nodes.size(); ++i) {
@@ -91,8 +120,12 @@ int main(int argc, char* argv[]) {
         aniso.interpolation(unscaledFunction, unscaledCoefficient);
         timer.toc();
 
+        timer.tic("Non Singular");
+        aniso.runKernelsFast(scaledFunction, output_s);
+        timer.toc();
+
         timer.tic("Apply Fast");
-        aniso.runKernelsFast(scaledFunction, output);
+        aniso.runKernelsFastSing(scaledFunction, output);
         timer.toc();
 
         timer.tic("Removal");
@@ -107,13 +140,13 @@ int main(int argc, char* argv[]) {
         aniso.singularAddFast(unscaledCoefficient, output);
         timer.toc();
 
+        daxpy(1.0, output_s, output);
         dscal(M_1_PI/2.0, output);
 
         return output;
     };
 
-    Vector charge(aniso.numberOfNodes);
-    setValue(charge, 1.0);
+
 
     Vector rhs = cache_mapping(charge);
 
@@ -132,9 +165,13 @@ int main(int argc, char* argv[]) {
 
     Vector x(aniso.numberOfNodes);
     setValue(x, 0.);
-    GMRES(forwardOperator, x, rhs, 5, 50, 1e-14);
+    GMRES(forwardOperator, x, rhs, 20, 400, 1e-12);
 
+    Vector t = forwardOperator(x);
+    daxpy(-1.0, rhs, t);
+    std::cout << nrm2(t) << std::endl;
 
+//todo: IO
     write_to_csv(aniso.nodes, "points.csv", " ");
     write_to_csv(x, "result.csv");
 

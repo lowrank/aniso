@@ -19,12 +19,23 @@ Aniso::~Aniso() {
 void Aniso::displayKernelCacheSize() {
     for (int i = 0; i < kernelSize; ++i) {
         auto len = realParts[i].Cache.size();
-        int cache = 0;
+        scalar_t cache = 0.; // avoid overflow
         for (int j = 0; j < len; ++j) {
             for (int k = 0 ; k < realParts[i].Cache[j].size(); ++k) {
                 cache += realParts[i].Cache[j][k].row() * realParts[i].Cache[j][k].col() * sizeof(scalar_t);
+
             }
         }
+
+        len = imagParts[i].Cache.size();
+        for (int j = 0; j < len; ++j) {
+            for (int k = 0 ; k < imagParts[i].Cache[j].size(); ++k) {
+                cache += imagParts[i].Cache[j][k].row() * imagParts[i].Cache[j][k].col() * sizeof(scalar_t);
+
+            }
+        }
+
+
         auto res =  double(cache) / 1024.0 / 1024.0;
         if (res < 1024) {
             std::cout << res << " MByte" <<std::endl;

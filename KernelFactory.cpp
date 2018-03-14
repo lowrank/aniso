@@ -8,6 +8,7 @@ KernelFactory::KernelFactory(int geometry_size, int geometry_degree, int kernel_
                              double kernel_g, int kernel_degree):Geometry(geometry_size, geometry_degree) {
     assert(size >= 1);
     realParts.resize((unsigned long) (2 * kernel_size - 1));
+    imagParts.resize((unsigned long) (2 * kernel_size - 1));
     anisotropy.resize(kernel_size);
     kernelSize = 2 * kernel_size - 1;
 
@@ -188,6 +189,26 @@ scalar_t KernelFactory::integral_helper(double x0, double y0, double x1, double 
     return ret * sqrt(SQR(x0 - x1) + SQR(y0 - y1))/2.0;
 }
 
+
+scalar_t KernelFactory::evaluate(point &p) {
+    Vector load(SQR(deg));
+    int col = getRow(p.x);
+    int row = getCol(p.y);
+
+    scalar_t x = p.x;
+    scalar_t y = p.y;
+    for (int n = 0; n < deg; ++n) {
+        for (int k = 0; k < deg; ++k) {
+            load(n * deg + k) = legendre((unsigned int) n, x) * legendre((unsigned int) k, y) / legendreNorms(n * deg + k);
+        }
+    }
+    return  ddot(load, sigma_t_Coeff[col * sz + row]);
+
+}
+
+
+
+
 void KernelFactory::interpolation() {
 
 #ifdef RUN_OMP
@@ -223,13 +244,39 @@ void KernelFactory::makeKernels() {
             scalar_t dist = sqrt(SQR(a.x - b.x) + SQR(a.y - b.y));
             scalar_t ang  = atan2(a.y - b.y, a.x - b.x);
             // compute the traditional interaction by fmm.
-            return dist == 0. ? 0. :  exp(-lineIntegral(a, b))*cos(i * ang)/dist;
+            if (i == 0) {
+                return dist == 0. ?0. :  (1)/dist;
+            }
+            else {
+                return dist == 0. ? 0. :  (1)*cos(i * ang)/dist;
+            }
+        };
+
+        imagParts[i].eval = [this,i](point& a, point& b) {
+            scalar_t dist = sqrt(SQR(a.x - b.x) + SQR(a.y - b.y));
+            scalar_t ang  = atan2(a.y - b.y, a.x - b.x);
+            // compute the traditional interaction by fmm.
+            if (i == 0) {
+                return dist == 0. ? evaluate(a) :  (exp(-lineIntegral(a, b)) - 1)/dist;
+            }
+            else {
+                return dist == 0. ? 0. :  (exp(-lineIntegral(a, b)) - 1)*cos(i * ang)/dist;
+            }
         };
     }
 }
 
+void KernelFactory::runKernelsCacheSing(Vector &f, Vector &ret) {
+    // not finished yet.
+    for (int i = 0; i < kernelSize; ++i) {
+        realParts[i].initialize(np, nodes, nodes, f,
+                                (index_t) nodes.size(),
+                                (index_t) nodes.size(), np * np, maxLevel);
+        realParts[i].runCache(ret);
+    }
+}
 
-/// \param f
+/// \param f, depreciated.
 void KernelFactory::runKernels(Vector& f, Vector& ret) {
     // not finished yet.
     for (int i = 0; i < kernelSize; ++i) {
@@ -245,17 +292,30 @@ void KernelFactory::runKernels(Vector& f, Vector& ret) {
 void KernelFactory::runKernelsCache(Vector& f, Vector& ret) {
     // not finished yet.
     for (int i = 0; i < kernelSize; ++i) {
-        realParts[i].initialize(np, nodes, nodes, f,
+        imagParts[i].initialize(np, nodes, nodes, f,
                                 (index_t) nodes.size(),
                                 (index_t) nodes.size(), np * np, maxLevel);
 
-        realParts[i].runCache(ret);
+        imagParts[i].runCache(ret);
     }
 }
 
 /// Run the kernels with rhs sources. Should be something like Toeplitz matrix product.
 /// \param f
 void KernelFactory::runKernelsFast(Vector& f, Vector& ret) {
+    // not finished yet.
+    for (int i = 0; i < kernelSize; ++i) {
+        imagParts[i].initialize(np, nodes, nodes, f,
+                                (index_t) nodes.size(),
+                                (index_t) nodes.size(), np * np, maxLevel);
+
+
+        imagParts[i].runFast(ret);
+    }
+}
+
+
+void KernelFactory::runKernelsFastSing(Vector& f, Vector& ret) {
     // not finished yet.
     for (int i = 0; i < kernelSize; ++i) {
         realParts[i].initialize(np, nodes, nodes, f,
@@ -502,12 +562,9 @@ void KernelFactory::singularAddFast(vector<Vector>& f_coeff, Vector& ret) {
 
                     ret(targetId) += ddot(load, f_coeff[col * sz + row]) *
                                      singInteractions[i][targetId][sourceQuadratureId];
-
                 }
             }
         }
-
-        //std::cout << std::setprecision(16) << ret(0) << " " << ret((int) (1)) << std::endl;
     }
 }
 
@@ -655,4 +712,5 @@ void KernelFactory::interpolation(Vector &h, vector<Vector> &h_coeff) {
         dgemv(1.0, interpolate, h_t, 0, h_coeff[i]);
     }
 }
+
 

@@ -20,6 +20,8 @@ public:
 
     // amazing, there is only real parts taking effect.
     vector<kernel> realParts;
+    vector<kernel> imagParts;
+
     int kernelSize;
 
     Vector anisotropy;
@@ -38,6 +40,7 @@ public:
     vector<vector<scalar_t>> singX, singY, singW;
 
     scalar_t lineIntegral(point& p, point &q);
+    scalar_t evaluate(point& p);
 
     void interpolation();
     void interpolation(Vector& h, vector<Vector>& h_coeff);
@@ -45,7 +48,9 @@ public:
     void singPrecompute();
     void makeKernels();
     void runKernels(Vector& f, Vector& ret);
+    void runKernelsCacheSing(Vector &f, Vector &ret);
     void runKernelsCache(Vector& f, Vector& ret);
+    void runKernelsFastSing(Vector& f, Vector& ret);
     void runKernelsFast(Vector& f, Vector& ret);
 
     void nearRemoval(Vector& f, Vector& ret);
