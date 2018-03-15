@@ -167,10 +167,6 @@ int main(int argc, char* argv[]) {
     setValue(x, 0.);
     GMRES(forwardOperator, x, rhs, 20, 400, 1e-12);
 
-    Vector t = forwardOperator(x);
-    daxpy(-1.0, rhs, t);
-    std::cout << nrm2(t) << std::endl;
-
 //todo: IO
     write_to_csv(aniso.nodes, "points.csv", " ");
     write_to_csv(x, "result.csv");
