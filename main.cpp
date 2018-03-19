@@ -78,7 +78,7 @@ int main(int argc, char* argv[]) {
         aniso.interpolation(unscaledFunctionCache, unscaledCoefficientCache);
         timer.toc();
 
-        timer.tic("Non Singular");
+        timer.tic("Non Singular Cache");
         aniso.runKernelsCache(scaledFunctionCache, output_non);
         timer.toc();
 
@@ -167,9 +167,10 @@ int main(int argc, char* argv[]) {
     setValue(x, 0.);
     GMRES(forwardOperator, x, rhs, 20, 400, 1e-12);
 
-//todo: IO
-    write_to_csv(aniso.nodes, "points.csv", " ");
-    write_to_csv(x, "result.csv");
+    if (atoi(cfg.options["IO"].c_str())) {
+        write_to_csv(aniso.nodes, "points.csv", " ");
+        write_to_csv(x, "result.csv");
+    }
 
     aniso.displayKernelCacheSize();
 
