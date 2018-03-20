@@ -45,11 +45,6 @@ int main(int argc, char* argv[]) {
         aniso.sigma_s(i) = scattering_function(aniso.nodes[i].x, aniso.nodes[i].y) ;
     }
 
-
-//    setValue(aniso.sigma_t, 10.2);
-//    setValue(aniso.sigma_s, 10.0);
-
-
     timer.tic("interpolate sigma");
     aniso.interpolation();
     timer.toc();
