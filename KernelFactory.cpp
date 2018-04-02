@@ -266,66 +266,118 @@ void KernelFactory::makeKernels() {
     }
 }
 
-void KernelFactory::runKernelsCacheSing(Vector &f, Vector &ret) {
-    // not finished yet.
-    for (int i = 0; i < kernelSize; ++i) {
-        realParts[i].initialize(np, nodes, nodes, f,
-                                (index_t) nodes.size(),
-                                (index_t) nodes.size(), np * np, maxLevel);
-        realParts[i].runCache(ret);
-    }
+//void KernelFactory::runKernelsCacheSing(Vector &f, Vector &ret) {
+//    // not finished yet.
+//    for (int i = 0; i < kernelSize; ++i) {
+//        realParts[i].initialize(np, nodes, nodes, f,
+//                                (index_t) nodes.size(),
+//                                (index_t) nodes.size(), np * np, maxLevel);
+//        realParts[i].runCache(ret);
+//    }
+//}
+
+void KernelFactory::runKernelsCacheSing(int i, Vector &f, Vector &ret) {
+    realParts[i].initialize(np, nodes, nodes, f,
+                            (index_t) nodes.size(),
+                            (index_t) nodes.size(), np * np, maxLevel);
+    realParts[i].runCache(ret);
 }
 
+
 /// \param f, depreciated.
-void KernelFactory::runKernels(Vector& f, Vector& ret) {
+//void KernelFactory::runKernels(Vector& f, Vector& ret) {
+//    // not finished yet.
+//    for (int i = 0; i < kernelSize; ++i) {
+//        realParts[i].initialize(np, nodes, nodes, f,
+//                                (index_t) nodes.size(),
+//                                (index_t) nodes.size(), np * np, maxLevel);
+//        realParts[i].run(ret);
+//    }
+//}
+/// \param f, depreciated.
+void KernelFactory::runKernels(int i, Vector& f, Vector& ret) {
     // not finished yet.
-    for (int i = 0; i < kernelSize; ++i) {
-        realParts[i].initialize(np, nodes, nodes, f,
-                                (index_t) nodes.size(),
-                                (index_t) nodes.size(), np * np, maxLevel);
-        realParts[i].run(ret);
-    }
+    realParts[i].initialize(np, nodes, nodes, f,
+                            (index_t) nodes.size(),
+                            (index_t) nodes.size(), np * np, maxLevel);
+    realParts[i].run(ret);
 }
 /// input can be 0 vector only to cache the kernels.
 /// f can be dropped.
 /// \param f
-void KernelFactory::runKernelsCache(Vector& f, Vector& ret) {
-    // not finished yet.
-    for (int i = 0; i < kernelSize; ++i) {
-        imagParts[i].initialize(np, nodes, nodes, f,
-                                (index_t) nodes.size(),
-                                (index_t) nodes.size(), np * np, maxLevel);
+//void KernelFactory::runKernelsCache(Vector& f, Vector& ret) {
+//    // not finished yet.
+//    for (int i = 0; i < kernelSize; ++i) {
+//        imagParts[i].initialize(np, nodes, nodes, f,
+//                                (index_t) nodes.size(),
+//                                (index_t) nodes.size(), np * np, maxLevel);
+//
+//        imagParts[i].runCache(ret);
+//    }
+//}
 
-        imagParts[i].runCache(ret);
-    }
+void KernelFactory::runKernelsCache(int i, Vector& f, Vector& ret) {
+    imagParts[i].initialize(np, nodes, nodes, f,
+                            (index_t) nodes.size(),
+                            (index_t) nodes.size(), np * np, maxLevel);
+
+    imagParts[i].runCache(ret);
+
 }
+
 
 /// Run the kernels with rhs sources. Should be something like Toeplitz matrix product.
 /// \param f
-void KernelFactory::runKernelsFast(Vector& f, Vector& ret) {
+//void KernelFactory::runKernelsFast(Vector& f, Vector& ret) {
+//    // not finished yet.
+//    for (int i = 0; i < kernelSize; ++i) {
+//        imagParts[i].initialize(np, nodes, nodes, f,
+//                                (index_t) nodes.size(),
+//                                (index_t) nodes.size(), np * np, maxLevel);
+//
+//
+//        imagParts[i].runFast(ret);
+//    }
+//}
+
+
+/// Run the kernels with rhs sources. Should be something like Toeplitz matrix product.
+/// \param f
+void KernelFactory::runKernelsFast(int i, Vector& f, Vector& ret) {
     // not finished yet.
-    for (int i = 0; i < kernelSize; ++i) {
-        imagParts[i].initialize(np, nodes, nodes, f,
-                                (index_t) nodes.size(),
-                                (index_t) nodes.size(), np * np, maxLevel);
+    imagParts[i].initialize(np, nodes, nodes, f,
+                            (index_t) nodes.size(),
+                            (index_t) nodes.size(), np * np, maxLevel);
 
 
-        imagParts[i].runFast(ret);
-    }
+    imagParts[i].runFast(ret);
+
 }
 
 
-void KernelFactory::runKernelsFastSing(Vector& f, Vector& ret) {
-    // not finished yet.
-    for (int i = 0; i < kernelSize; ++i) {
-        realParts[i].initialize(np, nodes, nodes, f,
-                                (index_t) nodes.size(),
-                                (index_t) nodes.size(), np * np, maxLevel);
+//void KernelFactory::runKernelsFastSing(Vector& f, Vector& ret) {
+//    // not finished yet.
+//    for (int i = 0; i < kernelSize; ++i) {
+//        realParts[i].initialize(np, nodes, nodes, f,
+//                                (index_t) nodes.size(),
+//                                (index_t) nodes.size(), np * np, maxLevel);
+//
+//
+//        realParts[i].runFast(ret);
+//    }
+//}
 
 
-        realParts[i].runFast(ret);
-    }
+void KernelFactory::runKernelsFastSing(int i, Vector& f, Vector& ret) {
+    realParts[i].initialize(np, nodes, nodes, f,
+                            (index_t) nodes.size(),
+                            (index_t) nodes.size(), np * np, maxLevel);
+
+
+    realParts[i].runFast(ret);
+
 }
+
 /// get the row number for y coordinate
 /// \param y
 /// \return
@@ -342,98 +394,202 @@ int  KernelFactory::getCol(double x)  {
 
 /// costy, remove all nearby interactions.
 /// \param f
-void KernelFactory::nearRemoval(Vector &f, Vector& ret) {
-    for (int i = 0; i < kernelSize; ++i) {
+//void KernelFactory::nearRemoval(Vector &f, Vector& ret) {
+//    for (int i = 0; i < kernelSize; ++i) {
+//#ifdef RUN_OMP
+//#pragma omp parallel for schedule(static, CHUNKSIZE) collapse(2) num_threads(omp_get_max_threads())
+//#endif
+//        for (int targetSquareId = 0; targetSquareId < numberOfSquares; ++targetSquareId) {
+//            for (int targetQuadratureId = 0; targetQuadratureId < SQR(deg); ++targetQuadratureId) {
+//
+//                int targetId = targetSquareId * (SQR(deg)) + targetQuadratureId;
+//                int targetSquareRow = targetSquareId / sz;
+//                int targetSquareCol = targetSquareId - sz * targetSquareRow;
+//
+//                for (int nearSourceSquareRowId = -1; nearSourceSquareRowId < 2; ++nearSourceSquareRowId) {
+//                    for (int nearSourceSquareColId = -1; nearSourceSquareColId < 2; ++nearSourceSquareColId) {
+//                        int nearSourceSquareId = targetSquareId + nearSourceSquareRowId * sz + nearSourceSquareColId;
+//
+////                        if (nearSourceSquareId == targetSquareId) continue;
+//
+//                        if (nearSourceSquareRowId + targetSquareRow >= 0 && nearSourceSquareRowId + targetSquareRow < sz) {
+//                            if (nearSourceSquareColId + targetSquareCol >= 0 && nearSourceSquareColId + targetSquareCol < sz) {
+//                                for (int nearSourceQuadratureId = 0;
+//                                     nearSourceQuadratureId < SQR(deg); ++nearSourceQuadratureId) {
+//                                    int nearSourceId = nearSourceSquareId * (SQR(deg)) + nearSourceQuadratureId;
+//                                    ret(targetId) -=
+//                                            realParts[i].eval(nodes[nearSourceId], nodes[targetId]) * f(nearSourceId);
+//
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
+//
+//            }
+//        }
+//    }
+//}
+
+
+
+
+void KernelFactory::nearRemoval(int i, Vector &f, Vector& ret) {
 #ifdef RUN_OMP
 #pragma omp parallel for schedule(static, CHUNKSIZE) collapse(2) num_threads(omp_get_max_threads())
 #endif
-        for (int targetSquareId = 0; targetSquareId < numberOfSquares; ++targetSquareId) {
-            for (int targetQuadratureId = 0; targetQuadratureId < SQR(deg); ++targetQuadratureId) {
+    for (int targetSquareId = 0; targetSquareId < numberOfSquares; ++targetSquareId) {
+        for (int targetQuadratureId = 0; targetQuadratureId < SQR(deg); ++targetQuadratureId) {
 
-                int targetId = targetSquareId * (SQR(deg)) + targetQuadratureId;
-                int targetSquareRow = targetSquareId / sz;
-                int targetSquareCol = targetSquareId - sz * targetSquareRow;
+            int targetId = targetSquareId * (SQR(deg)) + targetQuadratureId;
+            int targetSquareRow = targetSquareId / sz;
+            int targetSquareCol = targetSquareId - sz * targetSquareRow;
 
-                for (int nearSourceSquareRowId = -1; nearSourceSquareRowId < 2; ++nearSourceSquareRowId) {
-                    for (int nearSourceSquareColId = -1; nearSourceSquareColId < 2; ++nearSourceSquareColId) {
-                        int nearSourceSquareId = targetSquareId + nearSourceSquareRowId * sz + nearSourceSquareColId;
+            for (int nearSourceSquareRowId = -1; nearSourceSquareRowId < 2; ++nearSourceSquareRowId) {
+                for (int nearSourceSquareColId = -1; nearSourceSquareColId < 2; ++nearSourceSquareColId) {
+                    int nearSourceSquareId = targetSquareId + nearSourceSquareRowId * sz + nearSourceSquareColId;
 
 //                        if (nearSourceSquareId == targetSquareId) continue;
 
-                        if (nearSourceSquareRowId + targetSquareRow >= 0 && nearSourceSquareRowId + targetSquareRow < sz) {
-                            if (nearSourceSquareColId + targetSquareCol >= 0 && nearSourceSquareColId + targetSquareCol < sz) {
-                                for (int nearSourceQuadratureId = 0;
-                                     nearSourceQuadratureId < SQR(deg); ++nearSourceQuadratureId) {
-                                    int nearSourceId = nearSourceSquareId * (SQR(deg)) + nearSourceQuadratureId;
-                                    ret(targetId) -=
-                                            realParts[i].eval(nodes[nearSourceId], nodes[targetId]) * f(nearSourceId);
+                    if (nearSourceSquareRowId + targetSquareRow >= 0 && nearSourceSquareRowId + targetSquareRow < sz) {
+                        if (nearSourceSquareColId + targetSquareCol >= 0 && nearSourceSquareColId + targetSquareCol < sz) {
+                            for (int nearSourceQuadratureId = 0;
+                                 nearSourceQuadratureId < SQR(deg); ++nearSourceQuadratureId) {
+                                int nearSourceId = nearSourceSquareId * (SQR(deg)) + nearSourceQuadratureId;
+                                ret(targetId) -=
+                                        realParts[i].eval(nodes[nearSourceId], nodes[targetId]) * f(nearSourceId);
 
-                                }
                             }
                         }
                     }
                 }
-
             }
+
         }
     }
 }
+
+
+
+
+
 
 /// costy, add refined interactions.
 /// \param f
-void KernelFactory::refineAddOnCache(Vector &f, Vector& ret) {
-    for (int i = 0; i < kernelSize; ++i) {
+//void KernelFactory::refineAddOnCache(Vector &f, Vector& ret) {
+//    for (int i = 0; i < kernelSize; ++i) {
+//#ifdef RUN_OMP
+//#pragma omp parallel for schedule(static, CHUNKSIZE) collapse(2) num_threads(omp_get_max_threads())
+//#endif
+//        for (int targetSquareId = 0; targetSquareId < numberOfSquares; ++targetSquareId) {
+//            for (int targetQuadratureId = 0; targetQuadratureId < SQR(deg); ++targetQuadratureId) {
+//
+//                int targetId = targetSquareId * (SQR(deg)) + targetQuadratureId;
+//                int targetSquareRow = targetSquareId / sz;
+//                int targetSquareCol = targetSquareId - sz * targetSquareRow;
+//
+//                for (int nearSourceSquareRowId = -1; nearSourceSquareRowId < 2; ++nearSourceSquareRowId) {
+//                    for (int nearSourceSquareColId = -1; nearSourceSquareColId < 2; ++nearSourceSquareColId) {
+//                        int nearSourceSquareId = targetSquareId + nearSourceSquareRowId * sz + nearSourceSquareColId;
+//
+//                        if (nearSourceSquareId == targetSquareId) continue;
+//
+//                        if (nearSourceSquareRowId + targetSquareRow >= 0 &&
+//                            nearSourceSquareRowId + targetSquareRow < sz) {
+//                            if (nearSourceSquareColId + targetSquareCol >= 0 &&
+//                                nearSourceSquareColId + targetSquareCol < sz) {
+//
+//                                Vector oldValues(coarseQuadratureSize);
+//                                Vector newValues(refineQuadratureSize);
+//
+//                                for (int sourceQuadratureId = 0; sourceQuadratureId < coarseQuadratureSize; ++sourceQuadratureId) {
+//                                    oldValues(sourceQuadratureId) =
+//                                            f(nearSourceSquareId * coarseQuadratureSize +
+//                                                      sourceQuadratureId) / sqrtWeights(sourceQuadratureId);
+//                                }
+//
+//                                dgemv(1.0, nearMapping, oldValues, 0., newValues);
+//
+//                                for (int nearSourceQuadratureId = 0;
+//                                     nearSourceQuadratureId < refineQuadratureSize; ++nearSourceQuadratureId){
+//
+//                                    scalar_t lambda = (scalar_t) refine_quad_x[nearSourceQuadratureId];
+//                                    scalar_t mu     = (scalar_t) refine_quad_y[nearSourceQuadratureId];
+//                                    scalar_t w      = (scalar_t) refine_weight[nearSourceQuadratureId];
+//
+//                                    point cur_nearSourcePoint = {
+//                                            (0.5 + (targetSquareRow + nearSourceSquareRowId)) * dx + 0.5 * (lambda) * dx,
+//                                            (0.5 + (targetSquareCol + nearSourceSquareColId )) * dx + 0.5 * (mu) * dx
+//                                    };
+//
+//                                    // Cache the nearRefinement interaction.
+//                                    nearInteractions[i][targetId][nearSourceSquareRowId+1][nearSourceSquareColId+1][nearSourceQuadratureId] =
+//                                            realParts[i].eval(cur_nearSourcePoint, nodes[targetId]) * sqrt(w);
+//                                    ret(targetId) += nearInteractions[i][targetId][nearSourceSquareRowId+1][nearSourceSquareColId+1][nearSourceQuadratureId]
+//                                                    * newValues(nearSourceQuadratureId);
+//
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
+//}
+
+
+void KernelFactory::refineAddOnCache(int i, Vector &f, Vector& ret) {
 #ifdef RUN_OMP
 #pragma omp parallel for schedule(static, CHUNKSIZE) collapse(2) num_threads(omp_get_max_threads())
 #endif
-        for (int targetSquareId = 0; targetSquareId < numberOfSquares; ++targetSquareId) {
-            for (int targetQuadratureId = 0; targetQuadratureId < SQR(deg); ++targetQuadratureId) {
+    for (int targetSquareId = 0; targetSquareId < numberOfSquares; ++targetSquareId) {
+        for (int targetQuadratureId = 0; targetQuadratureId < SQR(deg); ++targetQuadratureId) {
 
-                int targetId = targetSquareId * (SQR(deg)) + targetQuadratureId;
-                int targetSquareRow = targetSquareId / sz;
-                int targetSquareCol = targetSquareId - sz * targetSquareRow;
+            int targetId = targetSquareId * (SQR(deg)) + targetQuadratureId;
+            int targetSquareRow = targetSquareId / sz;
+            int targetSquareCol = targetSquareId - sz * targetSquareRow;
 
-                for (int nearSourceSquareRowId = -1; nearSourceSquareRowId < 2; ++nearSourceSquareRowId) {
-                    for (int nearSourceSquareColId = -1; nearSourceSquareColId < 2; ++nearSourceSquareColId) {
-                        int nearSourceSquareId = targetSquareId + nearSourceSquareRowId * sz + nearSourceSquareColId;
+            for (int nearSourceSquareRowId = -1; nearSourceSquareRowId < 2; ++nearSourceSquareRowId) {
+                for (int nearSourceSquareColId = -1; nearSourceSquareColId < 2; ++nearSourceSquareColId) {
+                    int nearSourceSquareId = targetSquareId + nearSourceSquareRowId * sz + nearSourceSquareColId;
 
-                        if (nearSourceSquareId == targetSquareId) continue;
+                    if (nearSourceSquareId == targetSquareId) continue;
 
-                        if (nearSourceSquareRowId + targetSquareRow >= 0 &&
-                            nearSourceSquareRowId + targetSquareRow < sz) {
-                            if (nearSourceSquareColId + targetSquareCol >= 0 &&
-                                nearSourceSquareColId + targetSquareCol < sz) {
+                    if (nearSourceSquareRowId + targetSquareRow >= 0 &&
+                        nearSourceSquareRowId + targetSquareRow < sz) {
+                        if (nearSourceSquareColId + targetSquareCol >= 0 &&
+                            nearSourceSquareColId + targetSquareCol < sz) {
 
-                                Vector oldValues(coarseQuadratureSize);
-                                Vector newValues(refineQuadratureSize);
+                            Vector oldValues(coarseQuadratureSize);
+                            Vector newValues(refineQuadratureSize);
 
-                                for (int sourceQuadratureId = 0; sourceQuadratureId < coarseQuadratureSize; ++sourceQuadratureId) {
-                                    oldValues(sourceQuadratureId) =
-                                            f(nearSourceSquareId * coarseQuadratureSize +
-                                                      sourceQuadratureId) / sqrtWeights(sourceQuadratureId);
-                                }
+                            for (int sourceQuadratureId = 0; sourceQuadratureId < coarseQuadratureSize; ++sourceQuadratureId) {
+                                oldValues(sourceQuadratureId) =
+                                        f(nearSourceSquareId * coarseQuadratureSize +
+                                          sourceQuadratureId) / sqrtWeights(sourceQuadratureId);
+                            }
 
-                                dgemv(1.0, nearMapping, oldValues, 0., newValues);
+                            dgemv(1.0, nearMapping, oldValues, 0., newValues);
 
-                                for (int nearSourceQuadratureId = 0;
-                                     nearSourceQuadratureId < refineQuadratureSize; ++nearSourceQuadratureId){
+                            for (int nearSourceQuadratureId = 0;
+                                 nearSourceQuadratureId < refineQuadratureSize; ++nearSourceQuadratureId){
 
-                                    scalar_t lambda = (scalar_t) refine_quad_x[nearSourceQuadratureId];
-                                    scalar_t mu     = (scalar_t) refine_quad_y[nearSourceQuadratureId];
-                                    scalar_t w      = (scalar_t) refine_weight[nearSourceQuadratureId];
+                                scalar_t lambda = (scalar_t) refine_quad_x[nearSourceQuadratureId];
+                                scalar_t mu     = (scalar_t) refine_quad_y[nearSourceQuadratureId];
+                                scalar_t w      = (scalar_t) refine_weight[nearSourceQuadratureId];
 
-                                    point cur_nearSourcePoint = {
-                                            (0.5 + (targetSquareRow + nearSourceSquareRowId)) * dx + 0.5 * (lambda) * dx,
-                                            (0.5 + (targetSquareCol + nearSourceSquareColId )) * dx + 0.5 * (mu) * dx
-                                    };
+                                point cur_nearSourcePoint = {
+                                        (0.5 + (targetSquareRow + nearSourceSquareRowId)) * dx + 0.5 * (lambda) * dx,
+                                        (0.5 + (targetSquareCol + nearSourceSquareColId )) * dx + 0.5 * (mu) * dx
+                                };
 
-                                    // Cache the nearRefinement interaction.
-                                    nearInteractions[i][targetId][nearSourceSquareRowId+1][nearSourceSquareColId+1][nearSourceQuadratureId] =
-                                            realParts[i].eval(cur_nearSourcePoint, nodes[targetId]) * sqrt(w);
-                                    ret(targetId) += nearInteractions[i][targetId][nearSourceSquareRowId+1][nearSourceSquareColId+1][nearSourceQuadratureId]
-                                                    * newValues(nearSourceQuadratureId);
+                                // Cache the nearRefinement interaction.
+                                nearInteractions[i][targetId][nearSourceSquareRowId+1][nearSourceSquareColId+1][nearSourceQuadratureId] =
+                                        realParts[i].eval(cur_nearSourcePoint, nodes[targetId]) * sqrt(w);
+                                ret(targetId) += nearInteractions[i][targetId][nearSourceSquareRowId+1][nearSourceSquareColId+1][nearSourceQuadratureId]
+                                                 * newValues(nearSourceQuadratureId);
 
-                                }
                             }
                         }
                     }
@@ -441,50 +597,99 @@ void KernelFactory::refineAddOnCache(Vector &f, Vector& ret) {
             }
         }
     }
+
 }
 
+//void KernelFactory::refineAddOnFast(Vector &f, Vector& ret) {
+//    for (int i = 0; i < kernelSize; ++i) {
+//#ifdef RUN_OMP
+//#pragma omp parallel for schedule(static, CHUNKSIZE) collapse(2) num_threads(omp_get_max_threads())
+//#endif
+//        for (int targetSquareId = 0; targetSquareId < numberOfSquares; ++targetSquareId) {
+//            for (int targetQuadratureId = 0; targetQuadratureId < SQR(deg); ++targetQuadratureId) {
+//
+//                int targetId = targetSquareId * (SQR(deg)) + targetQuadratureId;
+//                int targetSquareRow = targetSquareId / sz;
+//                int targetSquareCol = targetSquareId - sz * targetSquareRow;
+//
+//                for (int nearSourceSquareRowId = -1; nearSourceSquareRowId < 2; ++nearSourceSquareRowId) {
+//                    for (int nearSourceSquareColId = -1; nearSourceSquareColId < 2; ++nearSourceSquareColId) {
+//                        int nearSourceSquareId = targetSquareId + nearSourceSquareRowId * sz + nearSourceSquareColId;
+//
+//                        if (nearSourceSquareId == targetSquareId) continue;
+//
+//                        if (nearSourceSquareRowId + targetSquareRow >= 0 &&
+//                            nearSourceSquareRowId + targetSquareRow < sz) {
+//                            if (nearSourceSquareColId + targetSquareCol >= 0 &&
+//                                nearSourceSquareColId + targetSquareCol < sz) {
+//
+//                                Vector oldValues(coarseQuadratureSize);
+//                                Vector newValues(refineQuadratureSize);
+//
+//                                for (int sourceQuadratureId = 0; sourceQuadratureId < coarseQuadratureSize; ++sourceQuadratureId) {
+//                                    oldValues(sourceQuadratureId) =
+//                                            f(nearSourceSquareId * coarseQuadratureSize +
+//                                              sourceQuadratureId) / sqrtWeights(sourceQuadratureId);
+//                                }
+//
+//                                dgemv(1.0, nearMapping, oldValues, 0., newValues);
+//
+//                                for (int nearSourceQuadratureId = 0;
+//                                     nearSourceQuadratureId < refineQuadratureSize; ++nearSourceQuadratureId){
+//
+//                                    ret(targetId) += nearInteractions[i][targetId][nearSourceSquareRowId+1][nearSourceSquareColId+1][nearSourceQuadratureId]
+//                                                     * newValues(nearSourceQuadratureId);
+//
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
+//}
 
-void KernelFactory::refineAddOnFast(Vector &f, Vector& ret) {
-    for (int i = 0; i < kernelSize; ++i) {
+
+void KernelFactory::refineAddOnFast(int i, Vector &f, Vector& ret) {
 #ifdef RUN_OMP
 #pragma omp parallel for schedule(static, CHUNKSIZE) collapse(2) num_threads(omp_get_max_threads())
 #endif
-        for (int targetSquareId = 0; targetSquareId < numberOfSquares; ++targetSquareId) {
-            for (int targetQuadratureId = 0; targetQuadratureId < SQR(deg); ++targetQuadratureId) {
+    for (int targetSquareId = 0; targetSquareId < numberOfSquares; ++targetSquareId) {
+        for (int targetQuadratureId = 0; targetQuadratureId < SQR(deg); ++targetQuadratureId) {
 
-                int targetId = targetSquareId * (SQR(deg)) + targetQuadratureId;
-                int targetSquareRow = targetSquareId / sz;
-                int targetSquareCol = targetSquareId - sz * targetSquareRow;
+            int targetId = targetSquareId * (SQR(deg)) + targetQuadratureId;
+            int targetSquareRow = targetSquareId / sz;
+            int targetSquareCol = targetSquareId - sz * targetSquareRow;
 
-                for (int nearSourceSquareRowId = -1; nearSourceSquareRowId < 2; ++nearSourceSquareRowId) {
-                    for (int nearSourceSquareColId = -1; nearSourceSquareColId < 2; ++nearSourceSquareColId) {
-                        int nearSourceSquareId = targetSquareId + nearSourceSquareRowId * sz + nearSourceSquareColId;
+            for (int nearSourceSquareRowId = -1; nearSourceSquareRowId < 2; ++nearSourceSquareRowId) {
+                for (int nearSourceSquareColId = -1; nearSourceSquareColId < 2; ++nearSourceSquareColId) {
+                    int nearSourceSquareId = targetSquareId + nearSourceSquareRowId * sz + nearSourceSquareColId;
 
-                        if (nearSourceSquareId == targetSquareId) continue;
+                    if (nearSourceSquareId == targetSquareId) continue;
 
-                        if (nearSourceSquareRowId + targetSquareRow >= 0 &&
-                            nearSourceSquareRowId + targetSquareRow < sz) {
-                            if (nearSourceSquareColId + targetSquareCol >= 0 &&
-                                nearSourceSquareColId + targetSquareCol < sz) {
+                    if (nearSourceSquareRowId + targetSquareRow >= 0 &&
+                        nearSourceSquareRowId + targetSquareRow < sz) {
+                        if (nearSourceSquareColId + targetSquareCol >= 0 &&
+                            nearSourceSquareColId + targetSquareCol < sz) {
 
-                                Vector oldValues(coarseQuadratureSize);
-                                Vector newValues(refineQuadratureSize);
+                            Vector oldValues(coarseQuadratureSize);
+                            Vector newValues(refineQuadratureSize);
 
-                                for (int sourceQuadratureId = 0; sourceQuadratureId < coarseQuadratureSize; ++sourceQuadratureId) {
-                                    oldValues(sourceQuadratureId) =
-                                            f(nearSourceSquareId * coarseQuadratureSize +
-                                              sourceQuadratureId) / sqrtWeights(sourceQuadratureId);
-                                }
+                            for (int sourceQuadratureId = 0; sourceQuadratureId < coarseQuadratureSize; ++sourceQuadratureId) {
+                                oldValues(sourceQuadratureId) =
+                                        f(nearSourceSquareId * coarseQuadratureSize +
+                                          sourceQuadratureId) / sqrtWeights(sourceQuadratureId);
+                            }
 
-                                dgemv(1.0, nearMapping, oldValues, 0., newValues);
+                            dgemv(1.0, nearMapping, oldValues, 0., newValues);
 
-                                for (int nearSourceQuadratureId = 0;
-                                     nearSourceQuadratureId < refineQuadratureSize; ++nearSourceQuadratureId){
+                            for (int nearSourceQuadratureId = 0;
+                                 nearSourceQuadratureId < refineQuadratureSize; ++nearSourceQuadratureId){
 
-                                    ret(targetId) += nearInteractions[i][targetId][nearSourceSquareRowId+1][nearSourceSquareColId+1][nearSourceQuadratureId]
-                                                     * newValues(nearSourceQuadratureId);
+                                ret(targetId) += nearInteractions[i][targetId][nearSourceSquareRowId+1][nearSourceSquareColId+1][nearSourceQuadratureId]
+                                                 * newValues(nearSourceQuadratureId);
 
-                                }
                             }
                         }
                     }
@@ -492,80 +697,158 @@ void KernelFactory::refineAddOnFast(Vector &f, Vector& ret) {
             }
         }
     }
+
 }
 
-void KernelFactory::singularAddCache(vector<Vector>& f_coeff, Vector& ret) {
-    for (int i = 0; i < kernelSize; ++i) {
+//void KernelFactory::singularAddCache(vector<Vector>& f_coeff, Vector& ret) {
+//    for (int i = 0; i < kernelSize; ++i) {
+//        // no precomputation is acceptable.
+//#ifdef RUN_OMP
+//#pragma omp parallel for schedule(static, CHUNKSIZE) collapse(2)  num_threads(omp_get_max_threads())
+//#endif
+//        for (int targetSquareId = 0; targetSquareId < numberOfSquares; ++targetSquareId) {
+//            for (int targetQuadratureId = 0; targetQuadratureId < SQR(deg); ++targetQuadratureId) {
+//
+//                int col = targetSquareId / sz;
+//                int row = targetSquareId - col * sz;
+//
+//                int targetId = targetSquareId * (SQR(deg)) + targetQuadratureId;
+//
+//                for (int sourceQuadratureId = 0; sourceQuadratureId < 8 * SQR(singQuadratureRule.weights.size()); ++sourceQuadratureId) {
+//                    // scaled coordinates
+//                    scalar_t x =  (0.5 + col) * dx + 0.5 * (singX[targetQuadratureId][sourceQuadratureId]) * dx;
+//                    scalar_t y =  (0.5 + row) * dx + 0.5 * (singY[targetQuadratureId][sourceQuadratureId]) * dx;
+//                    scalar_t w = singW[targetQuadratureId][sourceQuadratureId] * SQR(dx) / 4.0;
+//
+//                    point cur_point = {x, y};
+//
+//                    Vector load(SQR(deg));
+//                    for (int n = 0; n < deg; ++n) {
+//                        for (int k = 0; k < deg; ++k) {
+//                            load(n * deg + k) = legendre((unsigned int) n, x) * legendre((unsigned int) k, y) / legendreNorms(n * deg + k);
+//                        }
+//                    }
+//
+//                    singInteractions[i][targetId][sourceQuadratureId] = realParts[i].eval(cur_point, nodes[targetId]) * w;
+//                    ret(targetId) += ddot(load, f_coeff[col * sz + row]) *
+//                            singInteractions[i][targetId][sourceQuadratureId];
+//
+//                }
+//            }
+//        }
+//    }
+//}
+
+
+
+void KernelFactory::singularAddCache(int i, vector<Vector>& f_coeff, Vector& ret) {
         // no precomputation is acceptable.
 #ifdef RUN_OMP
 #pragma omp parallel for schedule(static, CHUNKSIZE) collapse(2)  num_threads(omp_get_max_threads())
 #endif
-        for (int targetSquareId = 0; targetSquareId < numberOfSquares; ++targetSquareId) {
-            for (int targetQuadratureId = 0; targetQuadratureId < SQR(deg); ++targetQuadratureId) {
+    for (int targetSquareId = 0; targetSquareId < numberOfSquares; ++targetSquareId) {
+        for (int targetQuadratureId = 0; targetQuadratureId < SQR(deg); ++targetQuadratureId) {
 
-                int col = targetSquareId / sz;
-                int row = targetSquareId - col * sz;
+            int col = targetSquareId / sz;
+            int row = targetSquareId - col * sz;
 
-                int targetId = targetSquareId * (SQR(deg)) + targetQuadratureId;
+            int targetId = targetSquareId * (SQR(deg)) + targetQuadratureId;
 
-                for (int sourceQuadratureId = 0; sourceQuadratureId < 8 * SQR(singQuadratureRule.weights.size()); ++sourceQuadratureId) {
-                    // scaled coordinates
-                    scalar_t x =  (0.5 + col) * dx + 0.5 * (singX[targetQuadratureId][sourceQuadratureId]) * dx;
-                    scalar_t y =  (0.5 + row) * dx + 0.5 * (singY[targetQuadratureId][sourceQuadratureId]) * dx;
-                    scalar_t w = singW[targetQuadratureId][sourceQuadratureId] * SQR(dx) / 4.0;
+            for (int sourceQuadratureId = 0; sourceQuadratureId < 8 * SQR(singQuadratureRule.weights.size()); ++sourceQuadratureId) {
+                // scaled coordinates
+                scalar_t x =  (0.5 + col) * dx + 0.5 * (singX[targetQuadratureId][sourceQuadratureId]) * dx;
+                scalar_t y =  (0.5 + row) * dx + 0.5 * (singY[targetQuadratureId][sourceQuadratureId]) * dx;
+                scalar_t w = singW[targetQuadratureId][sourceQuadratureId] * SQR(dx) / 4.0;
 
-                    point cur_point = {x, y};
+                point cur_point = {x, y};
 
-                    Vector load(SQR(deg));
-                    for (int n = 0; n < deg; ++n) {
-                        for (int k = 0; k < deg; ++k) {
-                            load(n * deg + k) = legendre((unsigned int) n, x) * legendre((unsigned int) k, y) / legendreNorms(n * deg + k);
-                        }
+                Vector load(SQR(deg));
+                for (int n = 0; n < deg; ++n) {
+                    for (int k = 0; k < deg; ++k) {
+                        load(n * deg + k) = legendre((unsigned int) n, x) * legendre((unsigned int) k, y) / legendreNorms(n * deg + k);
                     }
-
-                    singInteractions[i][targetId][sourceQuadratureId] = realParts[i].eval(cur_point, nodes[targetId]) * w;
-                    ret(targetId) += ddot(load, f_coeff[col * sz + row]) *
-                            singInteractions[i][targetId][sourceQuadratureId];
-
                 }
+
+                singInteractions[i][targetId][sourceQuadratureId] = realParts[i].eval(cur_point, nodes[targetId]) * w;
+                ret(targetId) += ddot(load, f_coeff[col * sz + row]) *
+                                 singInteractions[i][targetId][sourceQuadratureId];
+
             }
         }
     }
+
 }
 
-void KernelFactory::singularAddFast(vector<Vector>& f_coeff, Vector& ret) {
-    for (int i = 0; i < kernelSize; ++i) {
+
+//void KernelFactory::singularAddFast(vector<Vector>& f_coeff, Vector& ret) {
+//    for (int i = 0; i < kernelSize; ++i) {
+//        // no precomputation is acceptable.
+//#ifdef RUN_OMP
+//#pragma omp parallel for schedule(static, CHUNKSIZE) collapse(2)  num_threads(omp_get_max_threads())
+//#endif
+//        for (int targetSquareId = 0; targetSquareId < numberOfSquares; ++targetSquareId) {
+//            for (int targetQuadratureId = 0; targetQuadratureId < SQR(deg); ++targetQuadratureId) {
+//
+//                int col = targetSquareId / sz;
+//                int row = targetSquareId - col * sz;
+//                int targetId = targetSquareId * (SQR(deg)) + targetQuadratureId;
+//
+//                for (int sourceQuadratureId = 0; sourceQuadratureId < 8 * SQR(singQuadratureRule.weights.size()); ++sourceQuadratureId) {
+//                    // scaled coordinates
+//                    scalar_t x =  (0.5 + col) * dx + 0.5 * (singX[targetQuadratureId][sourceQuadratureId]) * dx;
+//                    scalar_t y =  (0.5 + row) * dx + 0.5 * (singY[targetQuadratureId][sourceQuadratureId]) * dx;
+//
+//                    point cur_point = {x, y};
+//
+//                    Vector load(SQR(deg));
+//                    for (int n = 0; n < deg; ++n) {
+//                        for (int k = 0; k < deg; ++k) {
+//                            load(n * deg + k) = legendre((unsigned int) n, x) * legendre((unsigned int) k, y) / legendreNorms(n * deg + k);
+//                        }
+//                    }
+//
+//                    ret(targetId) += ddot(load, f_coeff[col * sz + row]) *
+//                                     singInteractions[i][targetId][sourceQuadratureId];
+//                }
+//            }
+//        }
+//    }
+//}
+//
+
+
+void KernelFactory::singularAddFast(int i, vector<Vector>& f_coeff, Vector& ret) {
         // no precomputation is acceptable.
 #ifdef RUN_OMP
 #pragma omp parallel for schedule(static, CHUNKSIZE) collapse(2)  num_threads(omp_get_max_threads())
 #endif
-        for (int targetSquareId = 0; targetSquareId < numberOfSquares; ++targetSquareId) {
-            for (int targetQuadratureId = 0; targetQuadratureId < SQR(deg); ++targetQuadratureId) {
+    for (int targetSquareId = 0; targetSquareId < numberOfSquares; ++targetSquareId) {
+        for (int targetQuadratureId = 0; targetQuadratureId < SQR(deg); ++targetQuadratureId) {
 
-                int col = targetSquareId / sz;
-                int row = targetSquareId - col * sz;
-                int targetId = targetSquareId * (SQR(deg)) + targetQuadratureId;
+            int col = targetSquareId / sz;
+            int row = targetSquareId - col * sz;
+            int targetId = targetSquareId * (SQR(deg)) + targetQuadratureId;
 
-                for (int sourceQuadratureId = 0; sourceQuadratureId < 8 * SQR(singQuadratureRule.weights.size()); ++sourceQuadratureId) {
-                    // scaled coordinates
-                    scalar_t x =  (0.5 + col) * dx + 0.5 * (singX[targetQuadratureId][sourceQuadratureId]) * dx;
-                    scalar_t y =  (0.5 + row) * dx + 0.5 * (singY[targetQuadratureId][sourceQuadratureId]) * dx;
+            for (int sourceQuadratureId = 0; sourceQuadratureId < 8 * SQR(singQuadratureRule.weights.size()); ++sourceQuadratureId) {
+                // scaled coordinates
+                scalar_t x =  (0.5 + col) * dx + 0.5 * (singX[targetQuadratureId][sourceQuadratureId]) * dx;
+                scalar_t y =  (0.5 + row) * dx + 0.5 * (singY[targetQuadratureId][sourceQuadratureId]) * dx;
 
-                    point cur_point = {x, y};
+                point cur_point = {x, y};
 
-                    Vector load(SQR(deg));
-                    for (int n = 0; n < deg; ++n) {
-                        for (int k = 0; k < deg; ++k) {
-                            load(n * deg + k) = legendre((unsigned int) n, x) * legendre((unsigned int) k, y) / legendreNorms(n * deg + k);
-                        }
+                Vector load(SQR(deg));
+                for (int n = 0; n < deg; ++n) {
+                    for (int k = 0; k < deg; ++k) {
+                        load(n * deg + k) = legendre((unsigned int) n, x) * legendre((unsigned int) k, y) / legendreNorms(n * deg + k);
                     }
-
-                    ret(targetId) += ddot(load, f_coeff[col * sz + row]) *
-                                     singInteractions[i][targetId][sourceQuadratureId];
                 }
+
+                ret(targetId) += ddot(load, f_coeff[col * sz + row]) *
+                                 singInteractions[i][targetId][sourceQuadratureId];
             }
         }
     }
+
 }
 
 

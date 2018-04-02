@@ -74,23 +74,23 @@ int main(int argc, char* argv[]) {
         timer.toc();
 
         timer.tic("Non Singular Cache");
-        aniso.runKernelsCache(scaledFunctionCache, output_non);
+        aniso.runKernelsCache(0,scaledFunctionCache, output_non);
         timer.toc();
 
         timer.tic("Cache");
-        aniso.runKernelsCacheSing(scaledFunctionCache, output_cache);
+        aniso.runKernelsCacheSing(0,scaledFunctionCache, output_cache);
         timer.toc();
 
         timer.tic("Removal");
-        aniso.nearRemoval(scaledFunctionCache, output_cache);
+        aniso.nearRemoval(0,scaledFunctionCache, output_cache);
         timer.toc();
 
         timer.tic("NearAddOn Cache");
-        aniso.refineAddOnCache(scaledFunctionCache, output_cache);
+        aniso.refineAddOnCache(0,scaledFunctionCache, output_cache);
         timer.toc();
 
         timer.tic("SingularAddOn Cache");
-        aniso.singularAddCache(unscaledCoefficientCache, output_cache);
+        aniso.singularAddCache(0,unscaledCoefficientCache, output_cache);
         timer.toc();
 
         daxpy(1.0, output_non, output_cache);
@@ -116,23 +116,23 @@ int main(int argc, char* argv[]) {
         timer.toc();
 
         timer.tic("Non Singular");
-        aniso.runKernelsFast(scaledFunction, output_s);
+        aniso.runKernelsFast(0,scaledFunction, output_s);
         timer.toc();
 
         timer.tic("Apply Fast");
-        aniso.runKernelsFastSing(scaledFunction, output);
+        aniso.runKernelsFastSing(0,scaledFunction, output);
         timer.toc();
 
         timer.tic("Removal");
-        aniso.nearRemoval(scaledFunction, output);
+        aniso.nearRemoval(0,scaledFunction, output);
         timer.toc();
 
         timer.tic("NearAddOn Fast");
-        aniso.refineAddOnFast(scaledFunction, output);
+        aniso.refineAddOnFast(0,scaledFunction, output);
         timer.toc();
 
         timer.tic("SingularAddOn Fast");
-        aniso.singularAddFast(unscaledCoefficient, output);
+        aniso.singularAddFast(0,unscaledCoefficient, output);
         timer.toc();
 
         daxpy(1.0, output_s, output);
@@ -140,8 +140,6 @@ int main(int argc, char* argv[]) {
 
         return output;
     };
-
-
 
     Vector rhs = cache_mapping(charge);
 

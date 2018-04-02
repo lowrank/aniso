@@ -47,17 +47,31 @@ public:
 
     void singPrecompute();
     void makeKernels();
-    void runKernels(Vector& f, Vector& ret);
-    void runKernelsCacheSing(Vector &f, Vector &ret);
-    void runKernelsCache(Vector& f, Vector& ret);
-    void runKernelsFastSing(Vector& f, Vector& ret);
-    void runKernelsFast(Vector& f, Vector& ret);
+//    void runKernels(Vector& f, Vector& ret);
+//    void runKernelsCacheSing(Vector &f, Vector &ret);
+//    void runKernelsCache(Vector& f, Vector& ret);
+//    void runKernelsFastSing(Vector& f, Vector& ret);
+//    void runKernelsFast(Vector& f, Vector& ret);
+//
+//    void nearRemoval(Vector& f, Vector& ret);
+//    void refineAddOnCache(Vector& f, Vector& ret);
+//    void refineAddOnFast(Vector& f, Vector& ret);
+//    void singularAddCache(vector<Vector>& f_coeff, Vector& ret);
+//    void singularAddFast(vector<Vector>& f_coeff, Vector& ret);
 
-    void nearRemoval(Vector& f, Vector& ret);
-    void refineAddOnCache(Vector& f, Vector& ret);
-    void refineAddOnFast(Vector& f, Vector& ret);
-    void singularAddCache(vector<Vector>& f_coeff, Vector& ret);
-    void singularAddFast(vector<Vector>& f_coeff, Vector& ret);
+
+
+    void runKernels(int i, Vector& f, Vector& ret);
+    void runKernelsCacheSing(int i, Vector &f, Vector &ret);
+    void runKernelsCache(int i, Vector& f, Vector& ret);
+    void runKernelsFastSing(int i, Vector& f, Vector& ret);
+    void runKernelsFast(int i, Vector& f, Vector& ret);
+
+    void nearRemoval(int i, Vector& f, Vector& ret);
+    void refineAddOnCache(int i, Vector& f, Vector& ret);
+    void refineAddOnFast(int i, Vector& f, Vector& ret);
+    void singularAddCache(int i, vector<Vector>& f_coeff, Vector& ret);
+    void singularAddFast(int i, vector<Vector>& f_coeff, Vector& ret);
 
     vector<Vector> sigma_t_Coeff;
     vector<Vector> sigma_s_Coeff;
