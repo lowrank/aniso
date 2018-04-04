@@ -32,11 +32,11 @@ int main(int argc, char* argv[]) {
     };
 
     auto scattering_function = [&](scalar_t x, scalar_t y) {
-        return 10 * 0.5 * (1 - cos(2 * M_PI * x)) ;
+        return 32 * 0.5 * (1 - cos(2 * M_PI * x)) ;
     };
 
     auto total_function = [&](scalar_t x, scalar_t y) {
-        return 10 * 0.5 * (1 - cos(2 * M_PI * x)) + 0.2;
+        return 32 * 0.5 * (1 - cos(2 * M_PI * x)) + 0.2;
     };
 
     for (int i = 0; i < aniso.nodes.size(); ++i) {
@@ -57,45 +57,22 @@ int main(int argc, char* argv[]) {
     aniso.makeKernels();
     timer.toc();
 
-    auto cache_mapping = [&](Vector& charge) {
-        assert(charge.row() == aniso.nodes.size());
-        Vector scaledFunctionCache(aniso.numberOfNodes);
-        Vector unscaledFunctionCache(aniso.numberOfNodes);
-        Vector output_cache;
-        Vector output_non;
-        vector<Vector> unscaledCoefficientCache;
-        for (int i = 0; i < aniso.nodes.size(); ++i) {
-            unscaledFunctionCache(i) = charge(i);
-            scaledFunctionCache(i) = charge(i) * aniso.weights[i];
-        }
-
-        timer.tic("interpolate source");
-        aniso.interpolation(unscaledFunctionCache, unscaledCoefficientCache);
-        timer.toc();
-
+    auto cache_mapping = [&]() {
         timer.tic("Non Singular Cache");
-        aniso.runKernelsCache(0,scaledFunctionCache, output_non);
+        aniso.runKernelsCache(0);
         timer.toc();
 
-        timer.tic("Cache");
-        aniso.runKernelsCacheSing(0,scaledFunctionCache, output_cache);
-        timer.toc();
-
-        timer.tic("Removal");
-        aniso.nearRemoval(0,scaledFunctionCache, output_cache);
+        timer.tic("Singular Cache");
+        aniso.runKernelsCacheSing(0);
         timer.toc();
 
         timer.tic("NearAddOn Cache");
-        aniso.refineAddOnCache(0,scaledFunctionCache, output_cache);
+        aniso.refineAddOnCache(0);
         timer.toc();
 
         timer.tic("SingularAddOn Cache");
-        aniso.singularAddCache(0,unscaledCoefficientCache, output_cache);
+        aniso.singularAddCache(0);
         timer.toc();
-
-        daxpy(1.0, output_non, output_cache);
-        dscal(M_1_PI/2.0, output_cache);
-        return output_cache;
     };
 
     auto apply_mapping = [&](Vector& charge) {
@@ -115,11 +92,11 @@ int main(int argc, char* argv[]) {
         aniso.interpolation(unscaledFunction, unscaledCoefficient);
         timer.toc();
 
-        timer.tic("Non Singular");
+        timer.tic("Non Singular Fast");
         aniso.runKernelsFast(0,scaledFunction, output_s);
         timer.toc();
 
-        timer.tic("Apply Fast");
+        timer.tic("Singular Fast");
         aniso.runKernelsFastSing(0,scaledFunction, output);
         timer.toc();
 
@@ -141,7 +118,9 @@ int main(int argc, char* argv[]) {
         return output;
     };
 
-    Vector rhs = cache_mapping(charge);
+    cache_mapping();
+
+    Vector rhs = apply_mapping(charge);
 
     auto forwardOperator = [&](Vector& scaledCharge) {
         Vector in = scaledCharge;
@@ -158,7 +137,7 @@ int main(int argc, char* argv[]) {
 
     Vector x(aniso.numberOfNodes);
     setValue(x, 0.);
-    GMRES(forwardOperator, x, rhs, 20, 400, 1e-12);
+    GMRES(forwardOperator, x, rhs, 80, 400, 1e-12);
 
     if (atoi(cfg.options["IO"].c_str())) {
         write_to_csv(aniso.nodes, "points.csv", " ");

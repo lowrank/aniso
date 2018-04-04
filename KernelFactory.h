@@ -61,17 +61,18 @@ public:
 
 
 
-    void runKernels(int i, Vector& f, Vector& ret);
-    void runKernelsCacheSing(int i, Vector &f, Vector &ret);
-    void runKernelsCache(int i, Vector& f, Vector& ret);
-    void runKernelsFastSing(int i, Vector& f, Vector& ret);
-    void runKernelsFast(int i, Vector& f, Vector& ret);
+//    void runKernels(int i, Vector& f, Vector& ret);
+    void runKernelsCacheSing(int i);
+    void runKernelsCache(int i);
+    void refineAddOnCache(int i);
+    void singularAddCache(int i);
 
     void nearRemoval(int i, Vector& f, Vector& ret);
-    void refineAddOnCache(int i, Vector& f, Vector& ret);
+
+    void runKernelsFastSing(int i, Vector& f, Vector& ret);
+    void runKernelsFast(int i, Vector& f, Vector& ret);
     void refineAddOnFast(int i, Vector& f, Vector& ret);
-    void singularAddCache(int i, vector<Vector>& f_coeff, Vector& ret);
-    void singularAddFast(int i, vector<Vector>& f_coeff, Vector& ret);
+    void singularAddFast(int i, vector<Vector>& fCoeff, Vector& ret);
 
     vector<Vector> sigma_t_Coeff;
     vector<Vector> sigma_s_Coeff;

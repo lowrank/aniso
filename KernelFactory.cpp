@@ -276,7 +276,11 @@ void KernelFactory::makeKernels() {
 //    }
 //}
 
-void KernelFactory::runKernelsCacheSing(int i, Vector &f, Vector &ret) {
+void KernelFactory::runKernelsCacheSing(int i) {
+    Vector ret;
+    Vector f( (index_t) nodes.size());
+    setValue(ret, 0.);
+    setValue(f, 0.);
     realParts[i].initialize(np, nodes, nodes, f,
                             (index_t) nodes.size(),
                             (index_t) nodes.size(), np * np, maxLevel);
@@ -295,13 +299,13 @@ void KernelFactory::runKernelsCacheSing(int i, Vector &f, Vector &ret) {
 //    }
 //}
 /// \param f, depreciated.
-void KernelFactory::runKernels(int i, Vector& f, Vector& ret) {
-    // not finished yet.
-    realParts[i].initialize(np, nodes, nodes, f,
-                            (index_t) nodes.size(),
-                            (index_t) nodes.size(), np * np, maxLevel);
-    realParts[i].run(ret);
-}
+//void KernelFactory::runKernels(int i, Vector& f, Vector& ret) {
+//    // not finished yet.
+//    realParts[i].initialize(np, nodes, nodes, f,
+//                            (index_t) nodes.size(),
+//                            (index_t) nodes.size(), np * np, maxLevel);
+//    realParts[i].run(ret);
+//}
 /// input can be 0 vector only to cache the kernels.
 /// f can be dropped.
 /// \param f
@@ -316,7 +320,11 @@ void KernelFactory::runKernels(int i, Vector& f, Vector& ret) {
 //    }
 //}
 
-void KernelFactory::runKernelsCache(int i, Vector& f, Vector& ret) {
+void KernelFactory::runKernelsCache(int i) {
+    Vector ret;
+    Vector f( (index_t) nodes.size());
+    setValue(ret, 0.);
+    setValue(f, 0.);
     imagParts[i].initialize(np, nodes, nodes, f,
                             (index_t) nodes.size(),
                             (index_t) nodes.size(), np * np, maxLevel);
@@ -539,7 +547,7 @@ void KernelFactory::nearRemoval(int i, Vector &f, Vector& ret) {
 //}
 
 
-void KernelFactory::refineAddOnCache(int i, Vector &f, Vector& ret) {
+void KernelFactory::refineAddOnCache(int i) {
 #ifdef RUN_OMP
 #pragma omp parallel for schedule(static, CHUNKSIZE) collapse(2) num_threads(omp_get_max_threads())
 #endif
@@ -561,16 +569,16 @@ void KernelFactory::refineAddOnCache(int i, Vector &f, Vector& ret) {
                         if (nearSourceSquareColId + targetSquareCol >= 0 &&
                             nearSourceSquareColId + targetSquareCol < sz) {
 
-                            Vector oldValues(coarseQuadratureSize);
-                            Vector newValues(refineQuadratureSize);
-
-                            for (int sourceQuadratureId = 0; sourceQuadratureId < coarseQuadratureSize; ++sourceQuadratureId) {
-                                oldValues(sourceQuadratureId) =
-                                        f(nearSourceSquareId * coarseQuadratureSize +
-                                          sourceQuadratureId) / sqrtWeights(sourceQuadratureId);
-                            }
-
-                            dgemv(1.0, nearMapping, oldValues, 0., newValues);
+//                            Vector oldValues(coarseQuadratureSize);
+//                            Vector newValues(refineQuadratureSize);
+//
+//                            for (int sourceQuadratureId = 0; sourceQuadratureId < coarseQuadratureSize; ++sourceQuadratureId) {
+//                                oldValues(sourceQuadratureId) =
+//                                        f(nearSourceSquareId * coarseQuadratureSize +
+//                                          sourceQuadratureId) / sqrtWeights(sourceQuadratureId);
+//                            }
+//
+//                            dgemv(1.0, nearMapping, oldValues, 0., newValues);
 
                             for (int nearSourceQuadratureId = 0;
                                  nearSourceQuadratureId < refineQuadratureSize; ++nearSourceQuadratureId){
@@ -587,8 +595,8 @@ void KernelFactory::refineAddOnCache(int i, Vector &f, Vector& ret) {
                                 // Cache the nearRefinement interaction.
                                 nearInteractions[i][targetId][nearSourceSquareRowId+1][nearSourceSquareColId+1][nearSourceQuadratureId] =
                                         realParts[i].eval(cur_nearSourcePoint, nodes[targetId]) * sqrt(w);
-                                ret(targetId) += nearInteractions[i][targetId][nearSourceSquareRowId+1][nearSourceSquareColId+1][nearSourceQuadratureId]
-                                                 * newValues(nearSourceQuadratureId);
+//                                ret(targetId) += nearInteractions[i][targetId][nearSourceSquareRowId+1][nearSourceSquareColId+1][nearSourceQuadratureId]
+//                                                 * newValues(nearSourceQuadratureId);
 
                             }
                         }
@@ -741,7 +749,7 @@ void KernelFactory::refineAddOnFast(int i, Vector &f, Vector& ret) {
 
 
 
-void KernelFactory::singularAddCache(int i, vector<Vector>& f_coeff, Vector& ret) {
+void KernelFactory::singularAddCache(int i) {
         // no precomputation is acceptable.
 #ifdef RUN_OMP
 #pragma omp parallel for schedule(static, CHUNKSIZE) collapse(2)  num_threads(omp_get_max_threads())
@@ -762,16 +770,16 @@ void KernelFactory::singularAddCache(int i, vector<Vector>& f_coeff, Vector& ret
 
                 point cur_point = {x, y};
 
-                Vector load(SQR(deg));
-                for (int n = 0; n < deg; ++n) {
-                    for (int k = 0; k < deg; ++k) {
-                        load(n * deg + k) = legendre((unsigned int) n, x) * legendre((unsigned int) k, y) / legendreNorms(n * deg + k);
-                    }
-                }
+//                Vector load(SQR(deg));
+//                for (int n = 0; n < deg; ++n) {
+//                    for (int k = 0; k < deg; ++k) {
+//                        load(n * deg + k) = legendre((unsigned int) n, x) * legendre((unsigned int) k, y) / legendreNorms(n * deg + k);
+//                    }
+//                }
 
                 singInteractions[i][targetId][sourceQuadratureId] = realParts[i].eval(cur_point, nodes[targetId]) * w;
-                ret(targetId) += ddot(load, f_coeff[col * sz + row]) *
-                                 singInteractions[i][targetId][sourceQuadratureId];
+//                ret(targetId) += ddot(load, f_coeff[col * sz + row]) *
+//                                 singInteractions[i][targetId][sourceQuadratureId];
 
             }
         }
@@ -817,7 +825,7 @@ void KernelFactory::singularAddCache(int i, vector<Vector>& f_coeff, Vector& ret
 //
 
 
-void KernelFactory::singularAddFast(int i, vector<Vector>& f_coeff, Vector& ret) {
+void KernelFactory::singularAddFast(int i, vector<Vector>& fCoeff, Vector& ret) {
         // no precomputation is acceptable.
 #ifdef RUN_OMP
 #pragma omp parallel for schedule(static, CHUNKSIZE) collapse(2)  num_threads(omp_get_max_threads())
@@ -843,7 +851,7 @@ void KernelFactory::singularAddFast(int i, vector<Vector>& f_coeff, Vector& ret)
                     }
                 }
 
-                ret(targetId) += ddot(load, f_coeff[col * sz + row]) *
+                ret(targetId) += ddot(load, fCoeff[col * sz + row]) *
                                  singInteractions[i][targetId][sourceQuadratureId];
             }
         }
