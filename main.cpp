@@ -32,11 +32,11 @@ int main(int argc, char* argv[]) {
     };
 
     auto scattering_function = [&](scalar_t x, scalar_t y) {
-        return 32 * 0.5 * (1 - cos(2 * M_PI * x)) ;
+        return 16 * 0.5 * (1 - cos(2 * M_PI * x)) ;
     };
 
     auto total_function = [&](scalar_t x, scalar_t y) {
-        return 32 * 0.5 * (1 - cos(2 * M_PI * x)) + 0.2;
+        return 16 * 0.5 * (1 - cos(2 * M_PI * x)) + 0.2;
     };
 
     for (int i = 0; i < aniso.nodes.size(); ++i) {
@@ -136,7 +136,8 @@ int main(int argc, char* argv[]) {
     };
 
     Vector x(aniso.numberOfNodes);
-    setValue(x, 0.);
+//    setValue(x, 15.);
+    load_csv(x, "result.csv");
     GMRES(forwardOperator, x, rhs, 80, 400, 1e-12);
 
     if (atoi(cfg.options["IO"].c_str())) {

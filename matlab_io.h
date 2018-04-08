@@ -11,7 +11,7 @@
 #include "bbfmm/bbfmm.h"
 #include "bbfmm/linalg.h"
 
-void write_to_csv(vector<scalar_t> data, std::string filename) {
+void write_to_csv(vector<scalar_t> &data, std::string filename) {
     std::ofstream outfile;
     outfile.open(filename);
     for (auto it : data) {
@@ -21,7 +21,7 @@ void write_to_csv(vector<scalar_t> data, std::string filename) {
 }
 
 
-void write_to_csv(bbfmm::Vector data, std::string filename) {
+void write_to_csv(bbfmm::Vector &data, std::string filename) {
     std::ofstream outfile;
     outfile.open(filename);
     for (int id = 0; id < data.row(); ++id) {
@@ -30,7 +30,7 @@ void write_to_csv(bbfmm::Vector data, std::string filename) {
     outfile.close();
 }
 
-void write_to_csv(vector<point> data, std::string filename, std::string sep = " ") {
+void write_to_csv(vector<point> &data, std::string filename, std::string sep = " ") {
     std::ofstream outfile;
     outfile.open(filename);
     for (auto it : data) {
@@ -38,6 +38,21 @@ void write_to_csv(vector<point> data, std::string filename, std::string sep = " 
                 << "\n";
     }
     outfile.close();
+}
+
+void load_csv(bbfmm::Vector &data, std::string filename) {
+    std::ifstream infile;
+    infile.open(filename);
+    if (!infile.is_open()) {
+        std::cout << "File not open." << std::endl;
+    }
+
+    int row = 0;
+    double num = 0.;
+    while (infile >> num) {
+        data(row) = num;
+        row++;
+    }
 }
 
 
