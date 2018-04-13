@@ -1,27 +1,30 @@
+%% -- load all files
 addpath(genpath('./bin'));
 addpath(genpath('./class'));
 addpath(genpath('./contrib'));
+addpath(genpath('./femm'));
 
-rte = Aniso(64, 3, 1, 0.8, 8, 4, 20);
-nodes = rte.getNodes();
-n = size(nodes, 1);
 
-sigma_s = 10*ones(n,1);
-sigma_t = 0.2 + sigma_s;
+%% -- create Aniso class
+an = aniso();
+nodes = an.rte.getNodes();
 
-rte.setCoeff(sigma_s, sigma_t);
+% nodes are aligned in column major.
+% the diffusion preconditioner can be created on the coarser grid.
+%% -- set the integral
+ss = @(x)(50);
+aa = @(x)(0.2);
 
-tic;
-rte.cache();
-toc;
-%%
-chargeFun = @(x) (exp(- 5 * ((x(:,1)-0.5).^2 + (x(:,2)-0.5).^2)));
+an.diffgen(ss, aa);
+an.setCoeff(ss, aa);
 
+%% set the preconditioner.
+
+%% gmres
+chargeFun = @(x) (exp(- 25 * ((x(:,1)-0.5).^2 + (x(:,2)-0.5).^2)));
 charge = chargeFun(nodes);
-rhs = rte.mapping(charge);
+
+
 %%
-A = @(x)(x - sigma_s .* rte.mapping(x));
-tic;
-[y, flag, relres, iter, resvec] = gmres(A, rhs, 40, 1e-12, 400);
-toc;
+[y, flag, relres, iter, resvec] = an.solve(charge);
 
