@@ -18,7 +18,7 @@ classdef aniso < handle
     methods
         function obj = aniso()
             % generate RTE
-            obj.rte = Aniso(256, 1, 1, 0.8, 10, 4, 20);
+            obj.rte = Aniso(512, 1, 1, 0.8, 10, 4, 20);
             nodes = obj.rte.getNodes();
             
             % generate mesh
@@ -109,20 +109,20 @@ classdef aniso < handle
         
         
         
-        function [y, flag, relres, iter, resvec] = solve(obj, charge)
-%             chargeFun = @(x) (exp(- 25 * ((x(:,1)-0.5).^2 + (x(:,2)-0.5).^2)));
-%             charge = chargeFun(nodes);
+        function [y, flag, relres, iter, resvec] = solve(obj, charge, pr)
             rhs = obj.rte.mapping(charge);
-            
-%             size(charge)
-
-%             x0 = obj.prec(charge);
-            
-%             size(x0)
+          
             A = @(x)(x - obj.rte.mapping(obj.sigma_s_node .* x));
-            tic;
-            [y, flag, relres, iter, resvec] = gmres(A, rhs, 40, 1e-12, 400,[]);
-            toc;
+            if pr == 1
+                tic;
+                [y, flag, relres, iter, resvec] = gmres(A, rhs, 400, 1e-11, 400, @obj.prec);
+                toc;
+            else
+                tic;
+                [y, flag, relres, iter, resvec] = gmres(A, rhs, 400, 1e-11, 400,[]);
+                toc;
+            end
+                
         end
         
     end

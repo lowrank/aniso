@@ -12,7 +12,7 @@ nodes = an.rte.getNodes();
 % nodes are aligned in column major.
 % the diffusion preconditioner can be created on the coarser grid.
 %% -- set the integral
-ss = @(x)(50);
+ss = @(x)(60);
 aa = @(x)(0.2);
 
 an.diffgen(ss, aa);
@@ -26,5 +26,5 @@ charge = chargeFun(nodes);
 
 
 %%
-[y, flag, relres, iter, resvec] = an.solve(charge);
+[y, flag, relres, iter, resvec] = an.solve(charge, 1);
 
