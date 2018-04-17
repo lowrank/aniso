@@ -23,12 +23,12 @@ classdef Aniso < handle
             node = AnisoWrapper('getNodes', this.address);
         end
         
-        function cache(this)
-            AnisoWrapper('cache', this.address);
+        function cache(this, id)
+            AnisoWrapper('cache', this.address, id);
         end
         
-        function ret = mapping(this, charge)
-            ret = AnisoWrapper('mapping', this.address, charge);
+        function ret = mapping(this, charge, id)
+            ret = AnisoWrapper('mapping', this.address, charge, id);
         end
        
     end

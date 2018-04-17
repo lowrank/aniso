@@ -13,13 +13,22 @@ classdef aniso < handle
         sigma_s_node
         sigma_a_node
         sigma_t_node
+        g
+        N
+        n
     end
     
     methods
-        function obj = aniso()
+        function obj = aniso(g, N)
             % generate RTE
-            obj.rte = Aniso(512, 1, 1, 0.8, 10, 4, 20);
+            obj.rte = Aniso(128, 1, N, g, 10, 4, 20);
             nodes = obj.rte.getNodes();
+            
+            obj.n = size(nodes, 1);
+            
+            obj.N = N;
+            obj.g = g;
+            % n = 0 .. 2 * N - 2
             
             % generate mesh
             mesh = TriangleMesh();
@@ -92,7 +101,9 @@ classdef aniso < handle
             obj.rte.setCoeff(obj.sigma_s_node, obj.sigma_t_node);
             
             tic;
-            obj.rte.cache();
+            for i = 0 : (2 * obj.N - 2)
+                obj.rte.cache(i);
+            end
             toc;
 
         end
@@ -105,21 +116,57 @@ classdef aniso < handle
             z = obj.Diff \ (obj.Diff2 * L);
             x = zeros(size(h, 1), 1);
             x(obj.r2fId) = z(obj.intrId);
+        end        
+        
+        function rhs = forward(obj, u)
+            rhs = zeros(obj.N * obj.n, 1);
+            
+            for i = -(obj.N-1):0 
+                iid = abs(i);
+                
+                for j = -(obj.N - 1):(obj.N - 1)
+                    id = abs(j);
+                   
+                    theta = obj.rte.mapping(u( (id * obj.n + 1) : ((id+1) * obj.n)  ),  abs(i-j));
+   
+                    rhs(((iid) * obj.n+1 ): (iid+1) * obj.n) =...
+                            rhs(((iid) * obj.n+1 ): (iid+1) * obj.n) + theta;
+                   
+                end
+            end
+        end
+        
+        function rhs = mforward(obj, u)
+            rhs = zeros(obj.N * obj.n, 1);
+            for i = -(obj.N - 1):0
+                iid = abs(i);
+               
+                for j = -(obj.N - 1):(obj.N - 1)
+                    id = abs(j);
+                    
+                    theta = obj.rte.mapping( obj.sigma_s_node .* u( (id * obj.n + 1) : ((id+1) * obj.n)  ),  abs(i-j));
+                    
+                    chi = (obj.g^id - obj.g^(obj.N)) / (1 - obj.g^(obj.N));
+                    
+                    rhs(((iid) * obj.n+1 ): (iid+1) * obj.n) =...
+                            rhs(((iid) * obj.n+1 ): (iid+1) * obj.n) - chi * theta;
+                   
+                end
+            end
         end
         
         
-        
         function [y, flag, relres, iter, resvec] = solve(obj, charge, pr)
-            rhs = obj.rte.mapping(charge);
+            rhs = obj.forward(charge);
           
-            A = @(x)(x - obj.rte.mapping(obj.sigma_s_node .* x));
+            A = @(x)(x - obj.mforward(x));
             if pr == 1
                 tic;
-                [y, flag, relres, iter, resvec] = gmres(A, rhs, 400, 1e-11, 400, @obj.prec);
+                [y, flag, relres, iter, resvec] = gmres(A, rhs, 400, 1e-15, 400, @obj.prec);
                 toc;
             else
                 tic;
-                [y, flag, relres, iter, resvec] = gmres(A, rhs, 400, 1e-11, 400,[]);
+                [y, flag, relres, iter, resvec] = gmres(A, rhs, 400, 1e-15, 400,[]);
                 toc;
             end
                 

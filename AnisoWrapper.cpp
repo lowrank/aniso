@@ -70,26 +70,34 @@ namespace {
 
 
     MEX_DEFINE(cache)(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
-        InputArguments input(nrhs, prhs, 1);
+        InputArguments input(nrhs, prhs, 2);
         OutputArguments output(nlhs, plhs, 0);
+
+        auto Id_     = M_Cast<double>(C_CAST (prhs[1]));
+
         auto as = Session<Aniso>::get(input.get(0));
 
-        as->runKernelsCache(0);
+        int Id = (int)(*Id_);
 
-        as->runKernelsCacheSing(0);
+        as->runKernelsCache(Id);
 
-        as->refineAddOnCache(0);
+        as->runKernelsCacheSing(Id);
 
-        as->singularAddCache(0);
+        as->refineAddOnCache(Id);
+
+        as->singularAddCache(Id);
 
     }
 
     MEX_DEFINE(mapping)(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
-        InputArguments input(nrhs, prhs, 2);
+        InputArguments input(nrhs, prhs, 3);
         OutputArguments output(nlhs, plhs, 1);
         auto as = Session<Aniso>::get(input.get(0));
 
         auto charge = M_Cast<double>(C_CAST (prhs[1]));
+        auto Id_     = M_Cast<double>(C_CAST (prhs[2]));
+
+        int Id = (int)(*Id_);
 
         Vector scaledFunction(as->numberOfNodes);
         Vector unscaledFunction(as->numberOfNodes);
@@ -108,15 +116,15 @@ namespace {
 
         as->interpolation(unscaledFunction, unscaledCoefficient);
 
-        as->runKernelsFast(0,scaledFunction, output_s);
+        as->runKernelsFast(Id ,scaledFunction, output_s);
 
-        as->runKernelsFastSing(0,scaledFunction, output_t);
+        as->runKernelsFastSing( Id ,scaledFunction, output_t);
 
-        as->nearRemoval(0,scaledFunction, output_t);
+        as->nearRemoval(Id ,scaledFunction, output_t);
 
-        as->refineAddOnFast(0,scaledFunction, output_t);
+        as->refineAddOnFast(Id ,scaledFunction, output_t);
 
-        as->singularAddFast(0,unscaledCoefficient, output_t);
+        as->singularAddFast(Id ,unscaledCoefficient, output_t);
 
         daxpy(1.0, output_s, output_t);
         dscal(M_1_PI/2.0, output_t);
