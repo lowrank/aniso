@@ -149,7 +149,7 @@ classdef aniso < handle
                     chi = (obj.g^id - obj.g^(obj.N)) / (1 - obj.g^(obj.N));
                     
                     rhs(((iid) * obj.n+1 ): (iid+1) * obj.n) =...
-                            rhs(((iid) * obj.n+1 ): (iid+1) * obj.n) - chi * theta;
+                            rhs(((iid) * obj.n+1 ): (iid+1) * obj.n) + chi * theta;
                    
                 end
             end
@@ -162,11 +162,11 @@ classdef aniso < handle
             A = @(x)(x - obj.mforward(x));
             if pr == 1
                 tic;
-                [y, flag, relres, iter, resvec] = gmres(A, rhs, 400, 1e-15, 400, @obj.prec);
+                [y, flag, relres, iter, resvec] = gmres(A, rhs, 400, 1e-11, 400, @obj.prec);
                 toc;
             else
                 tic;
-                [y, flag, relres, iter, resvec] = gmres(A, rhs, 400, 1e-15, 400,[]);
+                [y, flag, relres, iter, resvec] = gmres(A, rhs, 400, 1e-11, 400,[]);
                 toc;
             end
                 

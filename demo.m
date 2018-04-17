@@ -6,7 +6,7 @@ addpath(genpath('./femm'));
 
 
 %% -- create Aniso class
-an = aniso(0.8, 4);
+an = aniso(0.8, 5);
 nodes = an.rte.getNodes();
 
 % nodes are aligned in column major.
